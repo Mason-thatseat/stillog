@@ -22,6 +22,11 @@ export default function BlockFloorPlanViewer({
     [shapes]
   );
 
+  const allShapesAsEditor = useMemo(
+    () => shapes.map(s => ({ ...s, isNew: false })),
+    [shapes]
+  );
+
   // Map shape_id to seat for stats lookup
   const seatByShapeId = useMemo(() => {
     const map = new Map<string, Seat>();
@@ -50,8 +55,7 @@ export default function BlockFloorPlanViewer({
     for (let i = sortedShapes.length - 1; i >= 0; i--) {
       const shape = sortedShapes[i];
       if (hitTestShape(x, y, { ...shape, isNew: false })) {
-        const isSeat = shape.shape_type === 'table' || isSeatBlock(shape.shape_type);
-        if (isSeat) {
+        if (isSeatBlock(shape.shape_type)) {
           handleShapeClick(shape.id);
         }
         return;
@@ -77,6 +81,7 @@ export default function BlockFloorPlanViewer({
             <ShapeRenderer
               key={shape.id}
               shape={{ ...shape, isNew: false }}
+              allShapes={allShapesAsEditor}
               isViewer
               avgRating={undefined}
               postsCount={seat?.posts_count}

@@ -86,7 +86,7 @@ export default function NewSpacePage() {
         // 3. Auto-create seats for seat blocks
         if (savedShapes) {
           const seatInserts = savedShapes
-            .filter((s) => isSeatBlock(s.shape_type) || s.shape_type === 'table')
+            .filter((s) => isSeatBlock(s.shape_type))
             .map((s, idx) => ({
               space_id: space.id,
               shape_id: s.id,

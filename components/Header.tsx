@@ -21,6 +21,12 @@ export default function Header() {
           >
             공간 탐색
           </Link>
+          <Link
+            href="/feedback"
+            className="text-sm text-foreground-muted hover:text-foreground hover:bg-background-subtle rounded-lg px-3 py-2 transition-colors"
+          >
+            의견
+          </Link>
 
           {loading ? (
             <div className="spinner ml-2" />

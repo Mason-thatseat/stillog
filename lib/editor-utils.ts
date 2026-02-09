@@ -33,7 +33,7 @@ export function hitTestShape(
   switch (shape_type) {
     case 'circle':
     case 'block_table_round':
-    case 'block_plant': {
+    case 'block_dispenser': {
       const cx = x + w / 2;
       const cy = y + h / 2;
       const rx = w / 2;
@@ -43,7 +43,7 @@ export function hitTestShape(
     case 'line':
       return distanceToLine(px, py, x, y, x + w, y + h) < 1.5;
     default:
-      // Rectangle, triangle, table, block types — bounding box check
+      // Rectangle, triangle, block types — bounding box check
       return px >= x && px <= x + w && py >= y && py <= y + h;
   }
 }
@@ -59,6 +59,84 @@ function distanceToLine(
   if (lenSq === 0) return Math.hypot(px - x1, py - y1);
   const t = clamp(((px - x1) * dx + (py - y1) * dy) / lenSq, 0, 1);
   return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+// Room edge visibility for wall merging
+export interface EdgeVisibility {
+  top: boolean;
+  right: boolean;
+  bottom: boolean;
+  left: boolean;
+}
+
+export function getRoomEdgeVisibility(
+  room: EditorShape,
+  allRooms: EditorShape[]
+): EdgeVisibility {
+  const vis: EdgeVisibility = { top: true, right: true, bottom: true, left: true };
+  const TOLERANCE = 0.5;
+
+  const rLeft = room.x_percent;
+  const rRight = room.x_percent + room.width_percent;
+  const rTop = room.y_percent;
+  const rBottom = room.y_percent + room.height_percent;
+
+  for (const other of allRooms) {
+    if (other.id === room.id) continue;
+    if (other.shape_type !== 'block_room') continue;
+
+    const oLeft = other.x_percent;
+    const oRight = other.x_percent + other.width_percent;
+    const oTop = other.y_percent;
+    const oBottom = other.y_percent + other.height_percent;
+
+    // Check TOP edge: other's bottom aligns with room's top, and horizontal overlap
+    if (Math.abs(oBottom - rTop) < TOLERANCE) {
+      const overlapLeft = Math.max(rLeft, oLeft);
+      const overlapRight = Math.min(rRight, oRight);
+      if (overlapRight - overlapLeft > TOLERANCE) {
+        // Check if overlap covers the full edge
+        if (overlapLeft <= rLeft + TOLERANCE && overlapRight >= rRight - TOLERANCE) {
+          vis.top = false;
+        }
+      }
+    }
+
+    // Check BOTTOM edge: other's top aligns with room's bottom
+    if (Math.abs(oTop - rBottom) < TOLERANCE) {
+      const overlapLeft = Math.max(rLeft, oLeft);
+      const overlapRight = Math.min(rRight, oRight);
+      if (overlapRight - overlapLeft > TOLERANCE) {
+        if (overlapLeft <= rLeft + TOLERANCE && overlapRight >= rRight - TOLERANCE) {
+          vis.bottom = false;
+        }
+      }
+    }
+
+    // Check LEFT edge: other's right aligns with room's left
+    if (Math.abs(oRight - rLeft) < TOLERANCE) {
+      const overlapTop = Math.max(rTop, oTop);
+      const overlapBottom = Math.min(rBottom, oBottom);
+      if (overlapBottom - overlapTop > TOLERANCE) {
+        if (overlapTop <= rTop + TOLERANCE && overlapBottom >= rBottom - TOLERANCE) {
+          vis.left = false;
+        }
+      }
+    }
+
+    // Check RIGHT edge: other's left aligns with room's right
+    if (Math.abs(oLeft - rRight) < TOLERANCE) {
+      const overlapTop = Math.max(rTop, oTop);
+      const overlapBottom = Math.min(rBottom, oBottom);
+      if (overlapBottom - overlapTop > TOLERANCE) {
+        if (overlapTop <= rTop + TOLERANCE && overlapBottom >= rBottom - TOLERANCE) {
+          vis.right = false;
+        }
+      }
+    }
+  }
+
+  return vis;
 }
 
 // Resize handle positions (8 directions)
@@ -116,7 +194,9 @@ export function createShape(
   type: ShapeType,
   x: number,
   y: number,
-  spaceId: string
+  spaceId: string,
+  width?: number,
+  height?: number
 ): EditorShape {
   const base = {
     id: `temp-${Date.now()}-${tempIdCounter++}`,
@@ -169,24 +249,14 @@ export function createShape(
         stroke_color: '#A78B71',
         stroke_width: 2,
       };
-    case 'table':
-      return {
-        ...base,
-        width_percent: 14,
-        height_percent: 10,
-        fill_color: '#F5E6D3',
-        stroke_color: '#A78B71',
-        stroke_width: 1.5,
-        label: '테이블',
-      };
     default: {
       // Block types
       if (isBlockType(type)) {
         const def = BLOCK_REGISTRY[type];
         return {
           ...base,
-          width_percent: def.defaultWidth,
-          height_percent: def.defaultHeight,
+          width_percent: width ?? def.defaultWidth,
+          height_percent: height ?? def.defaultHeight,
           fill_color: def.defaultFill,
           stroke_color: def.defaultStroke,
           stroke_width: 1,

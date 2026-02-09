@@ -236,6 +236,7 @@ export default async function HomePage() {
             <nav className="flex items-center gap-6 text-sm text-foreground-muted">
               <Link href="/spaces" className="hover:text-foreground transition-colors">공간 탐색</Link>
               <Link href="/spaces/new" className="hover:text-foreground transition-colors">공간 등록</Link>
+              <Link href="/feedback" className="hover:text-foreground transition-colors">의견</Link>
               <Link href="/auth" className="hover:text-foreground transition-colors">로그인</Link>
             </nav>
           </div>

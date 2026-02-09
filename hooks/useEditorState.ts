@@ -9,7 +9,7 @@ interface EditorStateReturn {
   selectedId: string | null;
   selectedShape: EditorShape | undefined;
   setShapes: (shapes: EditorShape[]) => void;
-  addShape: (type: ShapeType, x: number, y: number, spaceId: string) => EditorShape;
+  addShape: (type: ShapeType, x: number, y: number, spaceId: string, width?: number, height?: number) => EditorShape;
   updateShape: (id: string, updates: Partial<EditorShape>) => void;
   deleteShape: (id: string) => void;
   selectShape: (id: string | null) => void;
@@ -43,9 +43,9 @@ export function useEditorState(): EditorStateReturn {
     redoStack.current = [];
   }, []);
 
-  const addShape = useCallback((type: ShapeType, x: number, y: number, spaceId: string) => {
+  const addShape = useCallback((type: ShapeType, x: number, y: number, spaceId: string, width?: number, height?: number) => {
     pushSnapshot();
-    const shape = createShape(type, x, y, spaceId);
+    const shape = createShape(type, x, y, spaceId, width, height);
     const maxZ = shapesRef.current.reduce((max, s) => Math.max(max, s.z_index), 0);
     shape.z_index = maxZ + 1;
     const newShapes = [...shapesRef.current, shape];

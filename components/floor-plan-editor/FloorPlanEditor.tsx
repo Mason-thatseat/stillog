@@ -50,15 +50,15 @@ export default function FloorPlanEditor({
     }
   }, [initialShapes, setShapes]);
 
-  const handleAddShape = useCallback((type: ShapeType, x: number, y: number) => {
-    addShape(type, x, y, spaceId);
+  const handleAddShape = useCallback((type: ShapeType, x: number, y: number, width?: number, height?: number) => {
+    addShape(type, x, y, spaceId, width, height);
     setActiveTool(null);
   }, [addShape, spaceId]);
 
   const handleDelete = useCallback(() => {
     if (!selectedId) return;
     const shape = shapes.find(s => s.id === selectedId);
-    if (shape && (shape.shape_type === 'table' || isSeatBlock(shape.shape_type))) {
+    if (shape && isSeatBlock(shape.shape_type)) {
       if (!window.confirm('좌석 블록을 삭제하면 연결된 포스트도 사라질 수 있습니다. 삭제하시겠습니까?')) {
         return;
       }

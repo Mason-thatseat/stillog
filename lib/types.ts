@@ -7,15 +7,15 @@ export interface Profile {
 }
 
 export type ShapeType =
-  | 'rectangle' | 'circle' | 'triangle' | 'line' | 'table'
-  | 'block_wall' | 'block_floor' | 'block_window'
-  | 'block_table_rect' | 'block_table_round'
-  | 'block_chair' | 'block_sofa' | 'block_plant';
+  | 'rectangle' | 'circle' | 'triangle' | 'line'
+  | 'block_room' | 'block_window' | 'block_door' | 'block_sliding_door'
+  | 'block_table_2' | 'block_table_4' | 'block_table_6' | 'block_table_round'
+  | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser';
 
 export type BlockType = Extract<ShapeType,
-  | 'block_wall' | 'block_floor' | 'block_window'
-  | 'block_table_rect' | 'block_table_round'
-  | 'block_chair' | 'block_sofa' | 'block_plant'
+  | 'block_room' | 'block_window' | 'block_door' | 'block_sliding_door'
+  | 'block_table_2' | 'block_table_4' | 'block_table_6' | 'block_table_round'
+  | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser'
 >;
 
 export interface FloorPlanShape {
@@ -91,6 +91,14 @@ export interface Post {
   seat?: Seat & { space?: Space };
 }
 
+export interface Feedback {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profile?: Profile;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -118,6 +126,11 @@ export interface Database {
         Row: Post;
         Insert: Omit<Post, 'id' | 'created_at' | 'profile' | 'seat'>;
         Update: Partial<Omit<Post, 'id' | 'created_at' | 'profile' | 'seat'>>;
+      };
+      feedback: {
+        Row: Feedback;
+        Insert: Omit<Feedback, 'id' | 'created_at' | 'profile'>;
+        Update: Partial<Omit<Feedback, 'id' | 'created_at' | 'profile'>>;
       };
     };
   };

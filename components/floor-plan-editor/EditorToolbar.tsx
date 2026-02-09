@@ -17,7 +17,6 @@ const TOOLS: { type: ShapeType; label: string }[] = [
   { type: 'circle', label: '원' },
   { type: 'triangle', label: '삼각형' },
   { type: 'line', label: '선' },
-  { type: 'table', label: '테이블' },
 ];
 
 export default function EditorToolbar({

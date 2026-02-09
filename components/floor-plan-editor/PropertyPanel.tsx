@@ -30,13 +30,13 @@ export default function PropertyPanel({
   }
 
   const isBlock = isBlockType(shape.shape_type);
-  const isSeat = isSeatBlock(shape.shape_type) || shape.shape_type === 'table';
+  const isSeat = isSeatBlock(shape.shape_type);
   const blockDef = isBlock ? BLOCK_REGISTRY[shape.shape_type as keyof typeof BLOCK_REGISTRY] : null;
 
   // Block types: structure blocks have no label, furniture blocks have label
   const showLabel = isSeat || shape.shape_type === 'rectangle';
   // Block types: structure blocks don't show fill/stroke pickers (colors are fixed)
-  const showColorPickers = !isBlock || blockDef?.category === 'furniture';
+  const showColorPickers = !isBlock || blockDef?.category === 'furniture' || blockDef?.category === 'facility';
   const isLine = shape.shape_type === 'line';
 
   return (
@@ -51,7 +51,7 @@ export default function PropertyPanel({
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${
             isSeat ? 'bg-accent/15 text-accent' : 'bg-background-subtle text-foreground-muted'
           }`}>
-            {isSeat ? '좌석 블록' : blockDef?.category === 'structure' ? '구조' : '장식'}
+            {isSeat ? '좌석 블록' : blockDef?.category === 'structure' ? '구조' : '시설'}
           </span>
         </div>
       )}

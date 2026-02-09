@@ -49,50 +49,20 @@ export default function ShapeThumbnail({ type, size = 40 }: ShapeThumbnailProps)
           strokeLinecap="round"
         />
       )}
-      {type === 'table' && (
-        <>
-          <rect
-            x={pad} y={pad + 2}
-            width={s - pad * 2} height={s - pad * 2 - 4}
-            rx={4}
-            fill="url(#tableGradThumb)"
-            stroke="#A78B71"
-            strokeWidth={1.5}
-          />
-          <defs>
-            <linearGradient id="tableGradThumb" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F5E6D3" />
-              <stop offset="100%" stopColor="#E8D5C0" />
-            </linearGradient>
-          </defs>
-          <text x={s / 2} y={s / 2 + 4} textAnchor="middle" fontSize={14} fill="#A78B71">
-            ☕
-          </text>
-        </>
-      )}
 
-      {/* Block types */}
-      {type === 'block_wall' && (
-        <rect
-          x={pad} y={s * 0.35}
-          width={s - pad * 2} height={s * 0.3}
-          rx={2}
-          fill="#5C4033"
-          stroke="#3D2B1F"
-          strokeWidth={1.5}
-        />
-      )}
-      {type === 'block_floor' && (
+      {/* Block: Room */}
+      {type === 'block_room' && (
         <rect
           x={pad} y={pad}
           width={s - pad * 2} height={s - pad * 2}
           rx={2}
           fill="#FFF8F0"
-          stroke="#D4C4B5"
+          stroke="#5C4033"
           strokeWidth={1.5}
-          strokeDasharray="3 2"
         />
       )}
+
+      {/* Block: Window */}
       {type === 'block_window' && (
         <>
           <defs>
@@ -112,10 +82,65 @@ export default function ShapeThumbnail({ type, size = 40 }: ShapeThumbnailProps)
           <line x1={s / 2} y1={s * 0.35} x2={s / 2} y2={s * 0.65} stroke="rgba(255,255,255,0.7)" strokeWidth={1} />
         </>
       )}
-      {type === 'block_table_rect' && (
+
+      {/* Block: Door */}
+      {type === 'block_door' && (
+        <>
+          <rect
+            x={pad} y={s * 0.3}
+            width={s - pad * 2} height={s * 0.4}
+            rx={2}
+            fill="#D4A574"
+            stroke="#8B6914"
+            strokeWidth={1.5}
+          />
+          <circle cx={s * 0.72} cy={s * 0.5} r={2} fill="#8B6914" opacity={0.6} />
+        </>
+      )}
+
+      {/* Block: Sliding door */}
+      {type === 'block_sliding_door' && (
+        <>
+          <rect
+            x={pad} y={s * 0.3}
+            width={s - pad * 2} height={s * 0.4}
+            rx={2}
+            fill="#E8DDD3"
+            stroke="#8B7355"
+            strokeWidth={1.5}
+          />
+          <line x1={s / 2} y1={s * 0.35} x2={s / 2} y2={s * 0.65} stroke="#8B7355" strokeWidth={0.8} strokeDasharray="2 1.5" opacity={0.5} />
+        </>
+      )}
+
+      {/* Block: Table 2 */}
+      {type === 'block_table_2' && (
         <>
           <defs>
-            <linearGradient id="blockTableGradThumb" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="table2GradThumb" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#F5E6D3" />
+              <stop offset="100%" stopColor="#E8D5C0" />
+            </linearGradient>
+          </defs>
+          <rect
+            x={pad + 4} y={pad + 2}
+            width={s - pad * 2 - 8} height={s - pad * 2 - 4}
+            rx={4}
+            fill="url(#table2GradThumb)"
+            stroke="#A78B71"
+            strokeWidth={1.5}
+          />
+          <text x={s / 2} y={s / 2 + 1} textAnchor="middle" fontSize={9} fill="#8B7355" fontWeight="500">
+            2
+          </text>
+        </>
+      )}
+
+      {/* Block: Table 4 */}
+      {type === 'block_table_4' && (
+        <>
+          <defs>
+            <linearGradient id="table4GradThumb" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#F5E6D3" />
               <stop offset="100%" stopColor="#E8D5C0" />
             </linearGradient>
@@ -124,15 +149,40 @@ export default function ShapeThumbnail({ type, size = 40 }: ShapeThumbnailProps)
             x={pad} y={pad + 2}
             width={s - pad * 2} height={s - pad * 2 - 4}
             rx={4}
-            fill="url(#blockTableGradThumb)"
+            fill="url(#table4GradThumb)"
             stroke="#A78B71"
             strokeWidth={1.5}
           />
-          <text x={s / 2} y={s / 2 + 4} textAnchor="middle" fontSize={14} fill="#A78B71">
-            ☕
+          <text x={s / 2} y={s / 2 + 1} textAnchor="middle" fontSize={9} fill="#8B7355" fontWeight="500">
+            4
           </text>
         </>
       )}
+
+      {/* Block: Table 6 */}
+      {type === 'block_table_6' && (
+        <>
+          <defs>
+            <linearGradient id="table6GradThumb" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#F5E6D3" />
+              <stop offset="100%" stopColor="#E8D5C0" />
+            </linearGradient>
+          </defs>
+          <rect
+            x={pad - 1} y={pad + 4}
+            width={s - pad * 2 + 2} height={s - pad * 2 - 8}
+            rx={3}
+            fill="url(#table6GradThumb)"
+            stroke="#A78B71"
+            strokeWidth={1.5}
+          />
+          <text x={s / 2} y={s / 2 + 1} textAnchor="middle" fontSize={9} fill="#8B7355" fontWeight="500">
+            6
+          </text>
+        </>
+      )}
+
+      {/* Block: Round table */}
       {type === 'block_table_round' && (
         <>
           <defs>
@@ -153,62 +203,71 @@ export default function ShapeThumbnail({ type, size = 40 }: ShapeThumbnailProps)
           </text>
         </>
       )}
-      {type === 'block_chair' && (
+
+      {/* Block: Kitchen */}
+      {type === 'block_kitchen' && (
         <>
           <rect
-            x={pad + 4} y={pad + 4}
-            width={s - pad * 2 - 8} height={s - pad * 2 - 8}
+            x={pad} y={pad + 2}
+            width={s - pad * 2} height={s - pad * 2 - 4}
+            rx={3}
+            fill="#E8E8E8"
+            stroke="#999999"
+            strokeWidth={1.5}
+          />
+          <text x={s / 2} y={s / 2 + 2} textAnchor="middle" fontSize={8} fill="#666">
+            주방
+          </text>
+        </>
+      )}
+
+      {/* Block: Self bar */}
+      {type === 'block_selfbar' && (
+        <>
+          <rect
+            x={pad} y={pad + 4}
+            width={s - pad * 2} height={s - pad * 2 - 8}
             rx={3}
             fill="#D4C4B5"
             stroke="#8B7355"
             strokeWidth={1.5}
           />
-          {/* Backrest */}
-          <rect
-            x={pad + 5} y={pad + 4}
-            width={s - pad * 2 - 10} height={(s - pad * 2 - 8) * 0.28}
-            rx={2}
-            fill="#8B7355"
-            opacity={0.7}
-          />
+          <line x1={pad + 3} y1={s * 0.38} x2={s - pad - 3} y2={s * 0.38} stroke="#8B7355" strokeWidth={0.8} opacity={0.4} />
+          <text x={s / 2} y={s / 2 + 4} textAnchor="middle" fontSize={7} fill="#6B5B4D">
+            셀프바
+          </text>
         </>
       )}
-      {type === 'block_sofa' && (
+
+      {/* Block: Restroom */}
+      {type === 'block_restroom' && (
         <>
           <rect
-            x={pad} y={pad + 4}
-            width={s - pad * 2} height={s - pad * 2 - 8}
-            rx={5}
-            fill="#C9A882"
-            stroke="#8B7355"
+            x={pad} y={pad}
+            width={s - pad * 2} height={s - pad * 2}
+            rx={3}
+            fill="#E0EBF0"
+            stroke="#8BAAB8"
             strokeWidth={1.5}
           />
-          {/* U cushion */}
-          <path
-            d={`M ${pad + 5} ${pad + 8}
-                L ${pad + 5} ${s - pad - 7}
-                Q ${pad + 5} ${s - pad - 5} ${pad + 8} ${s - pad - 5}
-                L ${s - pad - 8} ${s - pad - 5}
-                Q ${s - pad - 5} ${s - pad - 5} ${s - pad - 5} ${s - pad - 7}
-                L ${s - pad - 5} ${pad + 8}`}
-            fill="none"
-            stroke="rgba(255,255,255,0.5)"
-            strokeWidth={1}
-            strokeLinecap="round"
-          />
+          <text x={s / 2} y={s / 2 + 2} textAnchor="middle" fontSize={14}>
+            🚻
+          </text>
         </>
       )}
-      {type === 'block_plant' && (
+
+      {/* Block: Dispenser */}
+      {type === 'block_dispenser' && (
         <>
           <ellipse
             cx={s / 2} cy={s / 2}
             rx={(s - pad * 2) / 2} ry={(s - pad * 2) / 2}
-            fill="#A8C686"
-            stroke="#6B8E4E"
+            fill="#D5E8F0"
+            stroke="#7BAFC0"
             strokeWidth={1.5}
           />
-          <text x={s / 2} y={s / 2 + 3} textAnchor="middle" fontSize={16}>
-            🌿
+          <text x={s / 2} y={s / 2 + 2} textAnchor="middle" fontSize={14}>
+            💧
           </text>
         </>
       )}
