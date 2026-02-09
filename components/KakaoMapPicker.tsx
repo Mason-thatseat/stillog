@@ -189,8 +189,7 @@ export default function KakaoMapPicker({
   }
 
   // Address search
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSearch() {
     if (!searchQuery.trim() || !geocoderRef.current) return;
 
     setSearching(true);
@@ -237,17 +236,19 @@ export default function KakaoMapPicker({
 
   return (
     <div className="space-y-3">
-      {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2">
+      {/* Search bar (div instead of form to avoid nested form issues) */}
+      <div className="flex gap-2">
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(); } }}
           placeholder="주소 또는 장소 검색 (예: 강남역, 스타벅스)"
           className="flex-1 text-sm px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-accent/50"
         />
         <button
-          type="submit"
+          type="button"
+          onClick={handleSearch}
           disabled={searching}
           className="px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors flex-shrink-0"
         >
@@ -272,7 +273,7 @@ export default function KakaoMapPicker({
             </svg>
           )}
         </button>
-      </form>
+      </div>
 
       {/* Map */}
       <div
