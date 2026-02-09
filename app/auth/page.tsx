@@ -1,18 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
 export default function AuthPage() {
+  const searchParams = useSearchParams();
+  const callbackError = searchParams.get('error');
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(callbackError ? `로그인 콜백 오류: ${callbackError}` : '');
 
   const router = useRouter();
   const supabase = createClient();
