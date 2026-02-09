@@ -1,0 +1,71 @@
+'use client';
+
+import Link from 'next/link';
+import { useAuth } from './AuthProvider';
+import Button from './ui/Button';
+
+export default function Header() {
+  const { user, profile, loading, signOut } = useAuth();
+
+  return (
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/50">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+        <Link href="/" className="text-xl font-bold text-accent tracking-tight">
+          STILLOG
+        </Link>
+
+        <nav className="flex items-center gap-1">
+          <Link
+            href="/spaces"
+            className="text-sm text-foreground-muted hover:text-foreground hover:bg-background-subtle rounded-lg px-3 py-2 transition-colors"
+          >
+            공간 탐색
+          </Link>
+
+          {loading ? (
+            <div className="spinner ml-2" />
+          ) : user ? (
+            <div className="flex items-center gap-1">
+              <Link
+                href="/spaces/new"
+                className="text-sm text-foreground-muted hover:text-foreground hover:bg-background-subtle rounded-lg px-3 py-2 transition-colors"
+              >
+                공간 등록
+              </Link>
+              <div className="w-px h-5 bg-border mx-1" />
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground hover:bg-background-subtle rounded-lg px-2.5 py-1.5 transition-colors"
+              >
+                {profile?.profile_image ? (
+                  <img
+                    src={profile.profile_image}
+                    alt={profile.nickname}
+                    className="w-7 h-7 rounded-full object-cover ring-1 ring-border"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent">
+                    {profile?.nickname?.[0] || 'U'}
+                  </div>
+                )}
+                <span className="hidden sm:inline font-medium">{profile?.nickname}</span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="text-foreground-muted"
+              >
+                로그아웃
+              </Button>
+            </div>
+          ) : (
+            <Link href="/auth" className="ml-1">
+              <Button size="sm">로그인</Button>
+            </Link>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+}
