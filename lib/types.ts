@@ -50,6 +50,8 @@ export interface Space {
   id: string;
   name: string;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   floor_plan_url: string | null;
   floor_plan_width: number | null;
   floor_plan_height: number | null;

@@ -50,14 +50,15 @@ export default function Header() {
                 )}
                 <span className="hidden sm:inline font-medium">{profile?.nickname}</span>
               </Link>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={signOut}
-                className="text-foreground-muted"
+                title="로그아웃"
+                className="text-foreground-muted hover:text-foreground hover:bg-background-subtle rounded-lg p-2 transition-colors"
               >
-                로그아웃
-              </Button>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3-3l3-3m0 0l-3-3m3 3H9" />
+                </svg>
+              </button>
             </div>
           ) : (
             <Link href="/auth" className="ml-1">

@@ -50,6 +50,8 @@ CREATE TABLE spaces (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   address TEXT,
+  latitude DECIMAL,
+  longitude DECIMAL,
   floor_plan_url TEXT,
   floor_plan_width INT,
   floor_plan_height INT,

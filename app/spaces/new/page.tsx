@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { isSeatBlock } from '@/lib/block-definitions';
 import FloorPlanEditor from '@/components/floor-plan-editor/FloorPlanEditor';
+import KakaoMapPicker from '@/components/KakaoMapPicker';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { EditorShape } from '@/lib/types';
@@ -13,6 +14,8 @@ import type { EditorShape } from '@/lib/types';
 export default function NewSpacePage() {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState<number | undefined>();
+  const [longitude, setLongitude] = useState<number | undefined>();
   const [step, setStep] = useState<'info' | 'editor'>('info');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -43,6 +46,8 @@ export default function NewSpacePage() {
         .insert({
           name,
           address: address || null,
+          latitude: latitude || null,
+          longitude: longitude || null,
           floor_plan_url: null,
           floor_plan_width: null,
           floor_plan_height: null,
@@ -136,14 +141,23 @@ export default function NewSpacePage() {
             placeholder="예: 스타벅스 강남점"
           />
 
-          <Input
-            id="address"
-            label="주소 (선택)"
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="예: 서울시 강남구 테헤란로 123"
-          />
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">위치 선택</label>
+            <KakaoMapPicker
+              latitude={latitude}
+              longitude={longitude}
+              onLocationChange={(lat, lng, addr) => {
+                setLatitude(lat);
+                setLongitude(lng);
+                if (addr) setAddress(addr);
+              }}
+            />
+            {address && (
+              <p className="mt-2 text-sm text-foreground-muted">
+                선택된 주소: {address}
+              </p>
+            )}
+          </div>
 
           {error && (
             <p className="text-sm text-red-500">{error}</p>

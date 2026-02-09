@@ -1,29 +1,18 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
 export default function AuthPage() {
-  return (
-    <Suspense>
-      <AuthContent />
-    </Suspense>
-  );
-}
-
-function AuthContent() {
-  const searchParams = useSearchParams();
-  const callbackError = searchParams.get('error');
-
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(callbackError ? `로그인 콜백 오류: ${callbackError}` : '');
+  const [error, setError] = useState('');
 
   const router = useRouter();
   const supabase = createClient();

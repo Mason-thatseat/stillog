@@ -30,11 +30,7 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return response;
     }
-
-    // Debug: include error message
-    const errMsg = encodeURIComponent(error.message || 'unknown');
-    return NextResponse.redirect(`${origin}/auth?error=${errMsg}`);
   }
 
-  return NextResponse.redirect(`${origin}/auth?error=no_code`);
+  return NextResponse.redirect(`${origin}/auth`);
 }
