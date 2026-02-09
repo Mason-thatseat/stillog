@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface KakaoMapPickerProps {
   latitude?: number;
@@ -14,6 +14,36 @@ declare global {
   }
 }
 
+let kakaoScriptLoaded = false;
+let kakaoScriptLoading = false;
+const kakaoLoadCallbacks: (() => void)[] = [];
+
+function loadKakaoScript(appKey: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (kakaoScriptLoaded && window.kakao?.maps) {
+      resolve();
+      return;
+    }
+
+    kakaoLoadCallbacks.push(resolve);
+
+    if (kakaoScriptLoading) return;
+    kakaoScriptLoading = true;
+
+    const script = document.createElement('script');
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&libraries=services&autoload=false`;
+    script.async = true;
+    script.onload = () => {
+      window.kakao.maps.load(() => {
+        kakaoScriptLoaded = true;
+        kakaoLoadCallbacks.forEach((cb) => cb());
+        kakaoLoadCallbacks.length = 0;
+      });
+    };
+    document.head.appendChild(script);
+  });
+}
+
 export default function KakaoMapPicker({
   latitude,
   longitude,
@@ -23,18 +53,21 @@ export default function KakaoMapPicker({
   const mapInstance = useRef<any>(null);
   const markerRef = useRef<any>(null);
   const geocoderRef = useRef<any>(null);
+  const onLocationChangeRef = useRef(onLocationChange);
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+
+  // Keep callback ref up to date
+  onLocationChangeRef.current = onLocationChange;
 
   const defaultLat = latitude || 37.5665;
   const defaultLng = longitude || 126.978;
 
-  // Reverse geocode: coordinates → address
-  const reverseGeocode = useCallback((lat: number, lng: number) => {
+  // Reverse geocode helper
+  function reverseGeocode(lat: number, lng: number) {
     if (!geocoderRef.current) return;
-
     geocoderRef.current.coord2Address(
       new window.kakao.maps.LatLng(lat, lng),
       (result: any[], status: string) => {
@@ -43,18 +76,17 @@ export default function KakaoMapPicker({
             result[0].road_address?.address_name ||
             result[0].address?.address_name ||
             '';
-          onLocationChange(lat, lng, addr);
+          onLocationChangeRef.current(lat, lng, addr);
         } else {
-          onLocationChange(lat, lng, '');
+          onLocationChangeRef.current(lat, lng, '');
         }
       }
     );
-  }, [onLocationChange]);
+  }
 
-  // Place or move marker
-  const placeMarker = useCallback((lat: number, lng: number) => {
+  // Place or move marker helper
+  function placeMarker(lat: number, lng: number) {
     if (!mapInstance.current) return;
-
     const position = new window.kakao.maps.LatLng(lat, lng);
 
     if (markerRef.current) {
@@ -66,7 +98,6 @@ export default function KakaoMapPicker({
         draggable: true,
       });
 
-      // Drag end → update address
       window.kakao.maps.event.addListener(markerRef.current, 'dragend', () => {
         const pos = markerRef.current.getPosition();
         reverseGeocode(pos.getLat(), pos.getLng());
@@ -75,66 +106,65 @@ export default function KakaoMapPicker({
     }
 
     mapInstance.current.setCenter(position);
-  }, [reverseGeocode]);
+  }
 
-  // Initialize map
-  const initMap = useCallback(() => {
-    if (!mapRef.current || !window.kakao?.maps) return;
-
-    const options = {
-      center: new window.kakao.maps.LatLng(defaultLat, defaultLng),
-      level: 3,
-    };
-
-    mapInstance.current = new window.kakao.maps.Map(mapRef.current, options);
-    geocoderRef.current = new window.kakao.maps.services.Geocoder();
-
-    // Zoom control
-    const zoomControl = new window.kakao.maps.ZoomControl();
-    mapInstance.current.addControl(zoomControl, window.kakao.maps.ControlPosition.RIGHT);
-
-    // Click on map → place pin
-    window.kakao.maps.event.addListener(mapInstance.current, 'click', (e: any) => {
-      const lat = e.latLng.getLat();
-      const lng = e.latLng.getLng();
-      placeMarker(lat, lng);
-      reverseGeocode(lat, lng);
-    });
-
-    // Place initial marker if coords provided
-    if (latitude && longitude) {
-      placeMarker(latitude, longitude);
-    }
-
-    setLoaded(true);
-  }, [defaultLat, defaultLng, latitude, longitude, placeMarker, reverseGeocode]);
-
-  // Load Kakao Maps script
+  // Load script & init map (once)
   useEffect(() => {
     const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
-    if (!appKey) {
-      console.error('NEXT_PUBLIC_KAKAO_MAP_APP_KEY is not set');
-      return;
-    }
+    if (!appKey || !mapRef.current) return;
 
-    if (window.kakao?.maps?.services) {
-      initMap();
-      return;
-    }
+    let cancelled = false;
 
-    const script = document.createElement('script');
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&libraries=services&autoload=false`;
-    script.async = true;
-    script.onload = () => {
-      window.kakao.maps.load(() => {
-        initMap();
+    loadKakaoScript(appKey).then(() => {
+      if (cancelled || !mapRef.current) return;
+
+      const map = new window.kakao.maps.Map(mapRef.current, {
+        center: new window.kakao.maps.LatLng(defaultLat, defaultLng),
+        level: 3,
       });
-    };
-    document.head.appendChild(script);
-  }, [initMap]);
 
-  // GPS: get current location
-  const handleGPS = useCallback(() => {
+      mapInstance.current = map;
+      geocoderRef.current = new window.kakao.maps.services.Geocoder();
+
+      // Zoom control
+      map.addControl(
+        new window.kakao.maps.ZoomControl(),
+        window.kakao.maps.ControlPosition.RIGHT
+      );
+
+      // Click → place pin
+      window.kakao.maps.event.addListener(map, 'click', (e: any) => {
+        const lat = e.latLng.getLat();
+        const lng = e.latLng.getLng();
+        placeMarker(lat, lng);
+        reverseGeocode(lat, lng);
+      });
+
+      // Place initial marker
+      if (latitude && longitude) {
+        placeMarker(latitude, longitude);
+      }
+
+      setMapReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto GPS on first load
+  useEffect(() => {
+    if (!mapReady) return;
+    if (latitude || longitude || markerRef.current) return;
+
+    handleGPS();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady]);
+
+  // GPS
+  function handleGPS() {
     if (!navigator.geolocation) {
       alert('이 브라우저에서는 위치 정보를 사용할 수 없습니다.');
       return;
@@ -147,9 +177,7 @@ export default function KakaoMapPicker({
         const lng = position.coords.longitude;
         placeMarker(lat, lng);
         reverseGeocode(lat, lng);
-        if (mapInstance.current) {
-          mapInstance.current.setLevel(3);
-        }
+        mapInstance.current?.setLevel(3);
         setGpsLoading(false);
       },
       () => {
@@ -158,10 +186,10 @@ export default function KakaoMapPicker({
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  }, [placeMarker, reverseGeocode]);
+  }
 
   // Address search
-  const handleSearch = (e: React.FormEvent) => {
+  function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!searchQuery.trim() || !geocoderRef.current) return;
 
@@ -170,32 +198,34 @@ export default function KakaoMapPicker({
     geocoderRef.current.addressSearch(
       searchQuery.trim(),
       (result: any[], status: string) => {
-        setSearching(false);
         if (status === window.kakao.maps.services.Status.OK && result[0]) {
+          setSearching(false);
           const lat = parseFloat(result[0].y);
           const lng = parseFloat(result[0].x);
-          const addr = result[0].road_address?.address_name || result[0].address_name || searchQuery;
+          const addr =
+            result[0].road_address?.address_name ||
+            result[0].address_name ||
+            searchQuery;
 
           placeMarker(lat, lng);
-          onLocationChange(lat, lng, addr);
-          if (mapInstance.current) {
-            mapInstance.current.setLevel(3);
-          }
+          onLocationChangeRef.current(lat, lng, addr);
+          mapInstance.current?.setLevel(3);
         } else {
-          // Try keyword search via Places
+          // Fallback: keyword search
           const ps = new window.kakao.maps.services.Places();
           ps.keywordSearch(searchQuery.trim(), (data: any[], psStatus: string) => {
             setSearching(false);
             if (psStatus === window.kakao.maps.services.Status.OK && data[0]) {
               const lat = parseFloat(data[0].y);
               const lng = parseFloat(data[0].x);
-              const addr = data[0].road_address_name || data[0].address_name || data[0].place_name;
+              const addr =
+                data[0].road_address_name ||
+                data[0].address_name ||
+                data[0].place_name;
 
               placeMarker(lat, lng);
-              onLocationChange(lat, lng, addr);
-              if (mapInstance.current) {
-                mapInstance.current.setLevel(3);
-              }
+              onLocationChangeRef.current(lat, lng, addr);
+              mapInstance.current?.setLevel(3);
             } else {
               alert('주소를 찾을 수 없습니다. 다시 시도해주세요.');
             }
@@ -203,15 +233,7 @@ export default function KakaoMapPicker({
         }
       }
     );
-  };
-
-  // Auto-detect GPS on first load
-  useEffect(() => {
-    if (loaded && !latitude && !longitude && !markerRef.current) {
-      handleGPS();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }
 
   return (
     <div className="space-y-3">
@@ -252,7 +274,7 @@ export default function KakaoMapPicker({
         </button>
       </form>
 
-      {/* Map container */}
+      {/* Map */}
       <div
         ref={mapRef}
         className="w-full aspect-[4/3] md:aspect-[16/9] rounded-xl border border-border overflow-hidden bg-background-subtle"
