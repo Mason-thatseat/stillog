@@ -1,6 +1,6 @@
 import { useRef, useCallback } from 'react';
 import type { EditorShape } from '@/lib/types';
-import { pointerToSvgPercent, calcResize, clamp, snapToGrid, type HandlePosition } from '@/lib/editor-utils';
+import { calcResize, clamp, snapToGrid, type HandlePosition } from '@/lib/editor-utils';
 
 type DragMode = 'move' | 'resize' | 'create';
 
@@ -20,15 +20,27 @@ interface UseDragAndDropProps {
   pushSnapshot: () => void;
   gridSnap?: boolean;
   gridSize?: number;
+  viewBoxHeight?: number;
 }
 
-export function useDragAndDrop({ svgRef, shapes, updateShape, pushSnapshot, gridSnap = false, gridSize = 5 }: UseDragAndDropProps) {
+export function useDragAndDrop({ svgRef, shapes, updateShape, pushSnapshot, gridSnap = false, gridSize = 5, viewBoxHeight = 100 }: UseDragAndDropProps) {
   const dragState = useRef<DragState | null>(null);
   const hasMoved = useRef(false);
 
   const snap = useCallback((v: number) => {
     return gridSnap ? snapToGrid(v, gridSize) : v;
   }, [gridSnap, gridSize]);
+
+  const toSvgPercent = useCallback((e: React.PointerEvent) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const rect = svgRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * viewBoxHeight;
+    return {
+      x: clamp(x, 0, 100),
+      y: clamp(y, 0, viewBoxHeight),
+    };
+  }, [svgRef, viewBoxHeight]);
 
   const startMove = useCallback((e: React.PointerEvent, shapeId: string) => {
     if (!svgRef.current) return;
@@ -38,7 +50,7 @@ export function useDragAndDrop({ svgRef, shapes, updateShape, pushSnapshot, grid
     const shape = shapes.find(s => s.id === shapeId);
     if (!shape) return;
 
-    const { x, y } = pointerToSvgPercent(e, svgRef.current);
+    const { x, y } = toSvgPercent(e);
     pushSnapshot();
     hasMoved.current = false;
 
@@ -54,7 +66,7 @@ export function useDragAndDrop({ svgRef, shapes, updateShape, pushSnapshot, grid
         h: shape.height_percent,
       },
     };
-  }, [svgRef, shapes, pushSnapshot]);
+  }, [svgRef, shapes, pushSnapshot, toSvgPercent]);
 
   const startResize = useCallback((e: React.PointerEvent, shapeId: string, handle: HandlePosition) => {
     if (!svgRef.current) return;
@@ -64,7 +76,7 @@ export function useDragAndDrop({ svgRef, shapes, updateShape, pushSnapshot, grid
     const shape = shapes.find(s => s.id === shapeId);
     if (!shape) return;
 
-    const { x, y } = pointerToSvgPercent(e, svgRef.current);
+    const { x, y } = toSvgPercent(e);
     pushSnapshot();
     hasMoved.current = false;
 
@@ -81,13 +93,13 @@ export function useDragAndDrop({ svgRef, shapes, updateShape, pushSnapshot, grid
         h: shape.height_percent,
       },
     };
-  }, [svgRef, shapes, pushSnapshot]);
+  }, [svgRef, shapes, pushSnapshot, toSvgPercent]);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragState.current || !svgRef.current) return;
     hasMoved.current = true;
 
-    const { x, y } = pointerToSvgPercent(e, svgRef.current);
+    const { x, y } = toSvgPercent(e);
     const ds = dragState.current;
     const dx = x - ds.startX;
     const dy = y - ds.startY;
@@ -96,7 +108,7 @@ export function useDragAndDrop({ svgRef, shapes, updateShape, pushSnapshot, grid
       const rawX = ds.originalShape.x + dx;
       const rawY = ds.originalShape.y + dy;
       const newX = clamp(snap(rawX), 0, 100 - ds.originalShape.w);
-      const newY = clamp(snap(rawY), 0, 100 - ds.originalShape.h);
+      const newY = clamp(snap(rawY), 0, viewBoxHeight - ds.originalShape.h);
       updateShape(ds.shapeId, { x_percent: newX, y_percent: newY });
     } else if (ds.mode === 'resize' && ds.handle) {
       const result = calcResize(ds.handle, dx, dy, ds.originalShape);
@@ -107,10 +119,11 @@ export function useDragAndDrop({ svgRef, shapes, updateShape, pushSnapshot, grid
         height_percent: snap(result.h),
       });
     }
-  }, [svgRef, updateShape, snap]);
+  }, [svgRef, updateShape, snap, toSvgPercent, viewBoxHeight]);
 
   const onPointerUp = useCallback(() => {
     dragState.current = null;
+    hasMoved.current = false;
   }, []);
 
   const isDragging = useCallback(() => {

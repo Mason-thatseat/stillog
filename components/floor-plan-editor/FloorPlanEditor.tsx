@@ -24,6 +24,7 @@ export default function FloorPlanEditor({
   const [activeTool, setActiveTool] = useState<ShapeType | null>(null);
   const [gridSnap, setGridSnap] = useState(true);
   const [gridSize, setGridSize] = useState(5);
+  const [canvasRatio, setCanvasRatio] = useState(1); // height/width ratio
 
   const {
     shapes,
@@ -115,6 +116,29 @@ export default function FloorPlanEditor({
 
       {/* Canvas */}
       <div className="flex-1 min-w-0">
+        {/* Canvas size selector */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] text-foreground-muted font-semibold">캔버스 비율</span>
+          {[
+            { label: '정사각형', ratio: 1 },
+            { label: '가로형', ratio: 0.75 },
+            { label: '세로형', ratio: 1.33 },
+            { label: '넓은 가로', ratio: 0.56 },
+          ].map(({ label, ratio }) => (
+            <button
+              key={label}
+              onClick={() => setCanvasRatio(ratio)}
+              className={`text-[10px] px-2 py-1 rounded-md transition-all ${
+                canvasRatio === ratio
+                  ? 'bg-accent/15 text-accent ring-1 ring-accent/40'
+                  : 'text-foreground-muted hover:bg-background-subtle'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <EditorCanvas
           shapes={shapes}
           selectedId={selectedId}
@@ -125,6 +149,7 @@ export default function FloorPlanEditor({
           pushSnapshot={pushSnapshot}
           gridSnap={gridSnap}
           gridSize={gridSize}
+          canvasRatio={canvasRatio}
         />
 
         {/* Save button */}

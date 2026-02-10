@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/lib/types';
@@ -26,58 +26,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const mounted = useRef(true);
 
   const supabase = createClient();
 
   useEffect(() => {
+    mounted.current = true;
+
+    const fetchProfile = async (userId: string) => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        if (mounted.current) setProfile(data);
+      } catch {
+        // Ignore AbortError and other errors
+      }
+    };
+
     const getSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted.current) return;
         setSession(session);
         setUser(session?.user ?? null);
-
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          setProfile(profile);
+          await fetchProfile(session.user.id);
         }
       } catch {
-        // Ignore errors, just ensure loading stops
+        // Ignore AbortError from React Strict Mode
       } finally {
-        setLoading(false);
+        if (mounted.current) setLoading(false);
       }
     };
 
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
+        if (!mounted.current) return;
         setSession(session);
         setUser(session?.user ?? null);
 
-        try {
-          if (session?.user) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            setProfile(profile);
-          } else {
-            setProfile(null);
-          }
-        } catch {
-          // Ignore errors
-        } finally {
-          setLoading(false);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
         }
+        if (mounted.current) setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted.current = false;
+      subscription.unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

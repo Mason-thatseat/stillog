@@ -2,8 +2,7 @@
 
 import { useRef, useCallback, useState } from 'react';
 import type { EditorShape, ShapeType } from '@/lib/types';
-import { pointerToSvgPercent, hitTestShape, snapToGrid } from '@/lib/editor-utils';
-import { isDragDrawBlock } from '@/lib/block-definitions';
+import { hitTestShape, snapToGrid } from '@/lib/editor-utils';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import ShapeRenderer from './ShapeRenderer';
 import ResizeHandles from './ResizeHandles';
@@ -18,6 +17,7 @@ interface EditorCanvasProps {
   pushSnapshot: () => void;
   gridSnap?: boolean;
   gridSize?: number;
+  canvasRatio?: number; // height / width (e.g. 1 = square, 0.75 = landscape 4:3)
 }
 
 interface DragDrawState {
@@ -25,8 +25,9 @@ interface DragDrawState {
   startY: number;
   currentX: number;
   currentY: number;
-  active: boolean;
 }
+
+const MIN_DRAG_SIZE = 3;
 
 export default function EditorCanvas({
   shapes,
@@ -38,9 +39,13 @@ export default function EditorCanvas({
   pushSnapshot,
   gridSnap = false,
   gridSize = 5,
+  canvasRatio = 1,
 }: EditorCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragDraw, setDragDraw] = useState<DragDrawState | null>(null);
+  const dragDrawRef = useRef<DragDrawState | null>(null);
+
+  const viewBoxHeight = Math.round(100 * canvasRatio);
 
   const { startMove, startResize, onPointerMove, onPointerUp, isDragging, didMove } = useDragAndDrop({
     svgRef,
@@ -49,86 +54,88 @@ export default function EditorCanvas({
     pushSnapshot,
     gridSnap,
     gridSize,
+    viewBoxHeight,
   });
 
   const sortedShapes = [...shapes].sort((a, b) => a.z_index - b.z_index);
-
-  const isDragDrawTool = activeTool ? isDragDrawBlock(activeTool) : false;
 
   const snapVal = useCallback((v: number) => {
     return gridSnap ? snapToGrid(v, gridSize) : v;
   }, [gridSnap, gridSize]);
 
-  const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (!svgRef.current) return;
+  const updateDragDraw = useCallback((value: DragDrawState | null) => {
+    dragDrawRef.current = value;
+    setDragDraw(value);
+  }, []);
 
-    // Drag-draw mode for room blocks
-    if (activeTool && isDragDrawTool) {
-      const { x, y } = pointerToSvgPercent(e, svgRef.current);
-      const sx = snapVal(x);
-      const sy = snapVal(y);
-      setDragDraw({ startX: sx, startY: sy, currentX: sx, currentY: sy, active: true });
-      (e.target as Element).setPointerCapture?.(e.pointerId);
-      e.preventDefault();
-      return;
-    }
-  }, [activeTool, isDragDrawTool, snapVal]);
+  // Convert pointer to SVG percent, respecting custom viewBox height
+  const pointerToPercent = useCallback((e: React.PointerEvent | React.MouseEvent) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const rect = svgRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * viewBoxHeight;
+    return {
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(viewBoxHeight, y)),
+    };
+  }, [viewBoxHeight]);
+
+  // All tools: pointer down starts drag-draw on canvas
+  const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (!svgRef.current || !activeTool) return;
+
+    const { x, y } = pointerToPercent(e);
+    const sx = snapVal(x);
+    const sy = snapVal(y);
+    updateDragDraw({ startX: sx, startY: sy, currentX: sx, currentY: sy });
+    svgRef.current.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }, [activeTool, snapVal, updateDragDraw, pointerToPercent]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     // Handle drag-draw preview
-    if (dragDraw?.active && svgRef.current) {
-      const { x, y } = pointerToSvgPercent(e, svgRef.current);
-      setDragDraw(prev => prev ? { ...prev, currentX: snapVal(x), currentY: snapVal(y) } : null);
+    if (dragDrawRef.current && svgRef.current) {
+      const { x, y } = pointerToPercent(e);
+      updateDragDraw({ ...dragDrawRef.current, currentX: snapVal(x), currentY: snapVal(y) });
       e.preventDefault();
       return;
     }
 
     // Normal drag/resize
     onPointerMove(e);
-  }, [dragDraw, snapVal, onPointerMove]);
+  }, [snapVal, onPointerMove, updateDragDraw, pointerToPercent]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    // Finish drag-draw
-    if (dragDraw?.active && activeTool) {
-      const x = Math.min(dragDraw.startX, dragDraw.currentX);
-      const y = Math.min(dragDraw.startY, dragDraw.currentY);
-      const w = Math.abs(dragDraw.currentX - dragDraw.startX);
-      const h = Math.abs(dragDraw.currentY - dragDraw.startY);
+    const dd = dragDrawRef.current;
+    if (dd && activeTool) {
+      const w = Math.abs(dd.currentX - dd.startX);
+      const h = Math.abs(dd.currentY - dd.startY);
+      updateDragDraw(null);
 
-      setDragDraw(null);
-
-      // Minimum size check (5x5)
-      if (w >= 5 && h >= 5) {
+      if (w >= MIN_DRAG_SIZE && h >= MIN_DRAG_SIZE) {
+        // Dragged enough → create with custom size
+        const x = Math.min(dd.startX, dd.currentX);
+        const y = Math.min(dd.startY, dd.currentY);
         onAddShape(activeTool, x, y, w, h);
+      } else {
+        // Just a click → place at default size
+        const cx = snapVal(dd.startX);
+        const cy = snapVal(dd.startY);
+        onAddShape(activeTool, cx, cy);
       }
       return;
     }
 
     onPointerUp();
-  }, [dragDraw, activeTool, onAddShape, onPointerUp]);
+  }, [activeTool, onAddShape, onPointerUp, updateDragDraw, snapVal]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (!svgRef.current) return;
     if (didMove()) return;
-    // Don't handle click if we just finished a drag-draw
-    if (isDragDrawTool) return;
+    // When a tool is active, pointer handlers already deal with placement
+    if (activeTool) return;
 
-    const rect = svgRef.current.getBoundingClientRect();
-    let x = ((e.clientX - rect.left) / rect.width) * 100;
-    let y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    // If tool is active (non-drag-draw), place a new shape
-    if (activeTool) {
-      if (gridSnap) {
-        x = snapToGrid(x - 6, gridSize);
-        y = snapToGrid(y - 5, gridSize);
-      } else {
-        x = x - 6;
-        y = y - 5;
-      }
-      onAddShape(activeTool, x, y);
-      return;
-    }
+    const { x, y } = pointerToPercent(e as unknown as React.PointerEvent);
 
     // Hit test shapes (reverse order for top-most first)
     for (let i = sortedShapes.length - 1; i >= 0; i--) {
@@ -140,7 +147,7 @@ export default function EditorCanvas({
 
     // Click on empty space → deselect
     onSelectShape(null);
-  }, [activeTool, isDragDrawTool, sortedShapes, onSelectShape, onAddShape, didMove, gridSnap, gridSize]);
+  }, [activeTool, sortedShapes, onSelectShape, didMove, pointerToPercent]);
 
   const handleShapePointerDown = useCallback((e: React.PointerEvent, shapeId: string) => {
     if (activeTool) return; // Don't drag when placing
@@ -151,7 +158,7 @@ export default function EditorCanvas({
   const selectedShape = shapes.find(s => s.id === selectedId);
 
   // Compute drag-draw preview rect
-  const previewRect = dragDraw?.active ? {
+  const previewRect = dragDraw ? {
     x: Math.min(dragDraw.startX, dragDraw.currentX),
     y: Math.min(dragDraw.startY, dragDraw.currentY),
     w: Math.abs(dragDraw.currentX - dragDraw.startX),
@@ -159,10 +166,13 @@ export default function EditorCanvas({
   } : null;
 
   return (
-    <div className="editor-canvas-wrapper w-full aspect-square bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+    <div
+      className="editor-canvas-wrapper w-full bg-white rounded-xl border border-border shadow-sm overflow-hidden"
+      style={{ aspectRatio: `1 / ${canvasRatio}` }}
+    >
       <svg
         ref={svgRef}
-        viewBox="0 0 100 100"
+        viewBox={`0 0 100 ${viewBoxHeight}`}
         className={`w-full h-full ${activeTool ? 'cursor-crosshair' : 'cursor-default'}`}
         onClick={handleCanvasClick}
         onPointerDown={handlePointerDown}
@@ -176,14 +186,11 @@ export default function EditorCanvas({
             <circle cx="0" cy="0" r={gridSnap ? 0.25 : 0.15} fill={gridSnap ? '#CBD5E1' : '#E5E7EB'} />
           </pattern>
         </defs>
-        <rect width="100" height="100" fill="#FEFCFA" />
-        <rect width="100" height="100" fill="url(#editorGrid)" />
+        <rect width="100" height={viewBoxHeight} fill="#FEFCFA" />
+        <rect width="100" height={viewBoxHeight} fill="url(#editorGrid)" />
 
-        {/* Border lines for visual reference */}
-        <line x1="0" y1="0" x2="100" y2="0" stroke="#E5E7EB" strokeWidth="0.2" />
-        <line x1="100" y1="0" x2="100" y2="100" stroke="#E5E7EB" strokeWidth="0.2" />
-        <line x1="100" y1="100" x2="0" y2="100" stroke="#E5E7EB" strokeWidth="0.2" />
-        <line x1="0" y1="100" x2="0" y2="0" stroke="#E5E7EB" strokeWidth="0.2" />
+        {/* Border lines */}
+        <rect x="0" y="0" width="100" height={viewBoxHeight} fill="none" stroke="#E5E7EB" strokeWidth="0.2" />
 
         {/* Shapes */}
         {sortedShapes.map((shape) => (
@@ -212,7 +219,7 @@ export default function EditorCanvas({
         )}
 
         {/* Resize handles for selected shape */}
-        {selectedShape && !dragDraw?.active && (
+        {selectedShape && !dragDrawRef.current && (
           <ResizeHandles
             shape={selectedShape}
             onResizeStart={(e, handle) => startResize(e, selectedShape.id, handle)}

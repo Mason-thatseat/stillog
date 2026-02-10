@@ -112,15 +112,7 @@ export default function NewSpacePage() {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-4">로그인이 필요합니다</h1>
-        <p className="text-foreground-muted mb-6">공간을 등록하려면 먼저 로그인해주세요.</p>
-        <Button onClick={() => router.push('/auth')}>로그인하기</Button>
-      </div>
-    );
-  }
+  // Auth is checked at save time, not at page load
 
   if (step === 'info') {
     return (
