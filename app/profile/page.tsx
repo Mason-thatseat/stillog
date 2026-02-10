@@ -22,13 +22,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
-  const { user, profile, loading: authLoading } = useAuth();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth');
-    }
-  }, [user, authLoading, router]);
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     if (profile) {
@@ -131,11 +125,12 @@ export default function ProfilePage() {
     setSaving(false);
   };
 
-  if (authLoading || !profile) {
+  if (!user || !profile) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="spinner" />
+        <div className="text-center py-16">
+          <p className="text-foreground-muted mb-4">로그인이 필요합니다</p>
+          <Button onClick={() => router.push('/auth')}>로그인하기</Button>
         </div>
       </div>
     );
