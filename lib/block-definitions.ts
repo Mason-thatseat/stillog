@@ -64,6 +64,32 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockDefinition> = {
     minWidth: 4,
     minHeight: 2,
   },
+  block_wall: {
+    type: 'block_wall',
+    category: 'structure',
+    label: '벽',
+    defaultWidth: 20,
+    defaultHeight: 2,
+    defaultFill: '#C8B8A8',
+    defaultStroke: '#5C4033',
+    createsSeat: false,
+    minWidth: 3,
+    minHeight: 1,
+    dragDraw: true,
+  },
+  block_partition: {
+    type: 'block_partition',
+    category: 'structure',
+    label: '파티션',
+    defaultWidth: 15,
+    defaultHeight: 2,
+    defaultFill: '#E0D8D0',
+    defaultStroke: '#9E8E7E',
+    createsSeat: false,
+    minWidth: 3,
+    minHeight: 1,
+    dragDraw: true,
+  },
   block_table_2: {
     type: 'block_table_2',
     category: 'furniture',
@@ -160,13 +186,25 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockDefinition> = {
     minWidth: 3,
     minHeight: 3,
   },
+  block_fridge: {
+    type: 'block_fridge',
+    category: 'facility',
+    label: '냉장고',
+    defaultWidth: 7,
+    defaultHeight: 7,
+    defaultFill: '#E8EEF0',
+    defaultStroke: '#8899AA',
+    createsSeat: false,
+    minWidth: 4,
+    minHeight: 4,
+  },
 };
 
 export const BLOCK_CATEGORIES: Array<{ id: string; label: string; types: BlockType[] }> = [
   {
     id: 'structure',
     label: '구조',
-    types: ['block_room', 'block_window', 'block_door', 'block_sliding_door'],
+    types: ['block_room', 'block_window', 'block_door', 'block_sliding_door', 'block_wall', 'block_partition'],
   },
   {
     id: 'furniture',
@@ -176,7 +214,7 @@ export const BLOCK_CATEGORIES: Array<{ id: string; label: string; types: BlockTy
   {
     id: 'facility',
     label: '시설',
-    types: ['block_kitchen', 'block_selfbar', 'block_restroom', 'block_dispenser'],
+    types: ['block_kitchen', 'block_selfbar', 'block_restroom', 'block_dispenser', 'block_fridge'],
   },
 ];
 

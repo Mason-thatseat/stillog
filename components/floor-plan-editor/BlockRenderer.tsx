@@ -198,6 +198,68 @@ export default function BlockRenderer({ shape, allShapes = [], isViewer, avgRati
         </g>
       );
 
+    case 'block_wall':
+      return (
+        <g>
+          <rect
+            x={x} y={y} width={w} height={h}
+            fill={shape.fill_color}
+            stroke={shape.stroke_color}
+            strokeWidth={shape.stroke_width * 0.2}
+            opacity={shape.opacity}
+          />
+          {/* Brick-like pattern lines */}
+          {h < w ? (
+            <>
+              <line x1={x + w * 0.33} y1={y} x2={x + w * 0.33} y2={y + h}
+                stroke={shape.stroke_color} strokeWidth={0.1} opacity={0.3} />
+              <line x1={x + w * 0.66} y1={y} x2={x + w * 0.66} y2={y + h}
+                stroke={shape.stroke_color} strokeWidth={0.1} opacity={0.3} />
+            </>
+          ) : (
+            <>
+              <line x1={x} y1={y + h * 0.33} x2={x + w} y2={y + h * 0.33}
+                stroke={shape.stroke_color} strokeWidth={0.1} opacity={0.3} />
+              <line x1={x} y1={y + h * 0.66} x2={x + w} y2={y + h * 0.66}
+                stroke={shape.stroke_color} strokeWidth={0.1} opacity={0.3} />
+            </>
+          )}
+        </g>
+      );
+
+    case 'block_partition': {
+      const isHorizontal = w >= h;
+      const zigzagCount = isHorizontal ? Math.max(4, Math.round(w / 2)) : Math.max(4, Math.round(h / 2));
+      const zigzagPoints: string[] = [];
+
+      if (isHorizontal) {
+        for (let i = 0; i <= zigzagCount; i++) {
+          const px = x + (w * i) / zigzagCount;
+          const py = i % 2 === 0 ? y : y + h;
+          zigzagPoints.push(`${px},${py}`);
+        }
+      } else {
+        for (let i = 0; i <= zigzagCount; i++) {
+          const py = y + (h * i) / zigzagCount;
+          const px = i % 2 === 0 ? x : x + w;
+          zigzagPoints.push(`${px},${py}`);
+        }
+      }
+
+      return (
+        <g>
+          <polyline
+            points={zigzagPoints.join(' ')}
+            fill="none"
+            stroke={shape.stroke_color}
+            strokeWidth={shape.stroke_width * 0.2}
+            strokeLinejoin="bevel"
+            opacity={shape.opacity}
+          />
+        </g>
+      );
+    }
+
     case 'block_table_2': {
       return (
         <g>
@@ -463,6 +525,52 @@ export default function BlockRenderer({ shape, allShapes = [], isViewer, avgRati
           >정수기</text>
         </g>
       );
+
+    case 'block_fridge': {
+      const fridgeGradId = `fridgeGrad-${shape.id}`;
+      const fridgeShineId = `fridgeShine-${shape.id}`;
+      const r = Math.min(w, h) * 0.06;
+      return (
+        <g opacity={shape.opacity}>
+          <defs>
+            <linearGradient id={fridgeGradId} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#F5F5F5" />
+              <stop offset="40%" stopColor="#FFFFFF" />
+              <stop offset="100%" stopColor="#E8E8E8" />
+            </linearGradient>
+            <linearGradient id={fridgeShineId} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.6)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+            </linearGradient>
+          </defs>
+          {/* Body */}
+          <rect x={x} y={y} width={w} height={h} rx={r}
+            fill={`url(#${fridgeGradId})`} stroke="#C0C0C0" strokeWidth={0.2} />
+          {/* Upper door (freezer) */}
+          <rect x={x + w * 0.06} y={y + h * 0.04} width={w * 0.88} height={h * 0.3} rx={r * 0.6}
+            fill="none" stroke="#D0D0D0" strokeWidth={0.12} />
+          {/* Lower door (fridge) */}
+          <rect x={x + w * 0.06} y={y + h * 0.38} width={w * 0.88} height={h * 0.58} rx={r * 0.6}
+            fill="none" stroke="#D0D0D0" strokeWidth={0.12} />
+          {/* Shine highlight */}
+          <rect x={x + w * 0.08} y={y + h * 0.05} width={w * 0.3} height={h * 0.25} rx={r * 0.4}
+            fill={`url(#${fridgeShineId})`} />
+          {/* Upper handle */}
+          <line x1={x + w * 0.78} y1={y + h * 0.1} x2={x + w * 0.78} y2={y + h * 0.28}
+            stroke="#B0B0B0" strokeWidth={0.3} strokeLinecap="round" />
+          {/* Lower handle */}
+          <line x1={x + w * 0.78} y1={y + h * 0.44} x2={x + w * 0.78} y2={y + h * 0.62}
+            stroke="#B0B0B0" strokeWidth={0.3} strokeLinecap="round" />
+          {/* Label */}
+          <text
+            x={x + w / 2} y={y + h * 0.82}
+            textAnchor="middle" dominantBaseline="middle"
+            fontSize={Math.min(w, h) * 0.13} fill="#999"
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >냉장고</text>
+        </g>
+      );
+    }
 
     default:
       return null;

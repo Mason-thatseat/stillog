@@ -156,7 +156,7 @@ export default function NewSpacePage() {
           )}
 
           <Button type="submit" className="w-full">
-            다음: 배치도 조립
+            다음: 배치도 생성
           </Button>
         </form>
       </div>
@@ -176,7 +176,7 @@ export default function NewSpacePage() {
             </svg>
             뒤로
           </button>
-          <h1 className="text-xl font-bold text-foreground">{name} - 배치도 조립</h1>
+          <h1 className="text-xl font-bold text-foreground">{name} - 배치도 생성</h1>
           {address && <p className="text-sm text-foreground-muted">{address}</p>}
         </div>
       </div>

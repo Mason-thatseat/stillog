@@ -8,14 +8,14 @@ export interface Profile {
 
 export type ShapeType =
   | 'rectangle' | 'circle' | 'triangle' | 'line'
-  | 'block_room' | 'block_window' | 'block_door' | 'block_sliding_door'
+  | 'block_room' | 'block_window' | 'block_door' | 'block_sliding_door' | 'block_wall' | 'block_partition'
   | 'block_table_2' | 'block_table_4' | 'block_table_6' | 'block_table_round'
-  | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser';
+  | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser' | 'block_fridge';
 
 export type BlockType = Extract<ShapeType,
-  | 'block_room' | 'block_window' | 'block_door' | 'block_sliding_door'
+  | 'block_room' | 'block_window' | 'block_door' | 'block_sliding_door' | 'block_wall' | 'block_partition'
   | 'block_table_2' | 'block_table_4' | 'block_table_6' | 'block_table_round'
-  | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser'
+  | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser' | 'block_fridge'
 >;
 
 export interface FloorPlanShape {

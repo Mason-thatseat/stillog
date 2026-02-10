@@ -113,6 +113,32 @@ export default function ShapeThumbnail({ type, size = 40 }: ShapeThumbnailProps)
         </>
       )}
 
+      {/* Block: Wall */}
+      {type === 'block_wall' && (
+        <>
+          <rect
+            x={pad} y={s * 0.32}
+            width={s - pad * 2} height={s * 0.36}
+            fill="#C8B8A8"
+            stroke="#5C4033"
+            strokeWidth={1.5}
+          />
+          <line x1={s * 0.33} y1={s * 0.32} x2={s * 0.33} y2={s * 0.68} stroke="#5C4033" strokeWidth={0.6} opacity={0.3} />
+          <line x1={s * 0.66} y1={s * 0.32} x2={s * 0.66} y2={s * 0.68} stroke="#5C4033" strokeWidth={0.6} opacity={0.3} />
+        </>
+      )}
+
+      {/* Block: Partition (zigzag) */}
+      {type === 'block_partition' && (
+        <polyline
+          points={`${pad},${s * 0.3} ${s * 0.25},${s * 0.7} ${s * 0.5},${s * 0.3} ${s * 0.75},${s * 0.7} ${s - pad},${s * 0.3}`}
+          fill="none"
+          stroke="#9E8E7E"
+          strokeWidth={2}
+          strokeLinejoin="bevel"
+        />
+      )}
+
       {/* Block: Table 2 */}
       {type === 'block_table_2' && (
         <>
@@ -253,6 +279,34 @@ export default function ShapeThumbnail({ type, size = 40 }: ShapeThumbnailProps)
           <text x={s / 2} y={s / 2 + 2} textAnchor="middle" fontSize={14}>
             🚻
           </text>
+        </>
+      )}
+
+      {/* Block: Fridge */}
+      {type === 'block_fridge' && (
+        <>
+          <defs>
+            <linearGradient id="fridgeGradThumb" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#F5F5F5" />
+              <stop offset="40%" stopColor="#FFFFFF" />
+              <stop offset="100%" stopColor="#E8E8E8" />
+            </linearGradient>
+          </defs>
+          {/* Body */}
+          <rect x={pad + 2} y={pad} width={s - pad * 2 - 4} height={s - pad * 2} rx={2}
+            fill="url(#fridgeGradThumb)" stroke="#C0C0C0" strokeWidth={1.2} />
+          {/* Upper door (freezer) */}
+          <rect x={pad + 4} y={pad + 2} width={s - pad * 2 - 8} height={(s - pad * 2) * 0.3} rx={1}
+            fill="none" stroke="#D5D5D5" strokeWidth={0.8} />
+          {/* Lower door */}
+          <rect x={pad + 4} y={pad + (s - pad * 2) * 0.36} width={s - pad * 2 - 8} height={(s - pad * 2) * 0.58} rx={1}
+            fill="none" stroke="#D5D5D5" strokeWidth={0.8} />
+          {/* Upper handle */}
+          <line x1={s * 0.65} y1={pad + 5} x2={s * 0.65} y2={pad + (s - pad * 2) * 0.27}
+            stroke="#B0B0B0" strokeWidth={1.5} strokeLinecap="round" />
+          {/* Lower handle */}
+          <line x1={s * 0.65} y1={pad + (s - pad * 2) * 0.42} x2={s * 0.65} y2={pad + (s - pad * 2) * 0.6}
+            stroke="#B0B0B0" strokeWidth={1.5} strokeLinecap="round" />
         </>
       )}
 
