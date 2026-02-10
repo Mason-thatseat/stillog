@@ -16,27 +16,31 @@ export default function ProfilePage() {
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [nickname, setNickname] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [contentLoading, setContentLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (profile) {
       setNickname(profile.nickname);
-      fetchUserContent();
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserContent();
+    }
+  }, [user]);
 
   const fetchUserContent = async () => {
     if (!user) return;
 
-    setLoading(true);
+    setContentLoading(true);
 
-    // Fetch user posts
     const { data: postsData } = await supabase
       .from('posts')
       .select(`
@@ -52,7 +56,6 @@ export default function ProfilePage() {
 
     setPosts(postsData || []);
 
-    // Fetch user spaces
     const { data: spacesData } = await supabase
       .from('spaces')
       .select(`
@@ -71,7 +74,7 @@ export default function ProfilePage() {
     })) || [];
 
     setSpaces(spacesWithCounts);
-    setLoading(false);
+    setContentLoading(false);
   };
 
   const handleUpdateProfile = async () => {
@@ -125,7 +128,19 @@ export default function ProfilePage() {
     setSaving(false);
   };
 
-  if (!user || !profile) {
+  // Auth 로딩 중이면 빈 화면 (깜빡임 방지)
+  if (authLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  // 진짜로 로그인이 안 된 경우만 로그인 안내
+  if (!user) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center py-16">
@@ -135,6 +150,10 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  const displayName = profile?.nickname || '사용자';
+  const displayEmail = profile?.email || '';
+  const displayInitial = displayName[0];
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -150,15 +169,15 @@ export default function ProfilePage() {
               onChange={handleAvatarChange}
               className="hidden"
             />
-            {profile.profile_image ? (
+            {profile?.profile_image ? (
               <img
                 src={profile.profile_image}
-                alt={profile.nickname}
+                alt={displayName}
                 className="w-20 h-20 rounded-full object-cover"
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-accent-light flex items-center justify-center text-2xl font-semibold text-accent">
-                {profile.nickname[0]}
+                {displayInitial}
               </div>
             )}
             <button
@@ -196,7 +215,7 @@ export default function ProfilePage() {
               <>
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-xl font-bold text-foreground">
-                    {profile.nickname}
+                    {displayName}
                   </h1>
                   <Button
                     variant="ghost"
@@ -206,7 +225,7 @@ export default function ProfilePage() {
                     편집
                   </Button>
                 </div>
-                <p className="text-foreground-muted text-sm">{profile.email}</p>
+                <p className="text-foreground-muted text-sm">{displayEmail}</p>
                 <div className="flex gap-4 mt-4 text-sm">
                   <span>
                     <strong className="text-foreground">{posts.length}</strong>{' '}
@@ -248,7 +267,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Content */}
-      {loading ? (
+      {contentLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="spinner" />
         </div>
