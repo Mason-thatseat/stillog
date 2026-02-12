@@ -176,6 +176,74 @@ export default function BlockRenderer({ shape, allShapes = [], isViewer, avgRati
         </g>
       );
 
+    case 'block_door_in':
+      return (
+        <g>
+          <rect
+            x={x} y={y} width={w} height={h}
+            rx={Math.min(w, h) * 0.08}
+            fill={shape.fill_color}
+            stroke={shape.stroke_color}
+            strokeWidth={shape.stroke_width * 0.15}
+            opacity={shape.opacity}
+          />
+          {/* Inward door arc (flipped) */}
+          <path
+            d={`M ${x + w * 0.15} ${y + h * 0.15} A ${w * 0.7} ${w * 0.7} 0 0 0 ${x + w * 0.85} ${y + h * 0.15}`}
+            fill="none"
+            stroke={shape.stroke_color}
+            strokeWidth={0.15}
+            strokeDasharray="0.5 0.3"
+            opacity={0.5}
+          />
+          {/* Door knob */}
+          <circle
+            cx={x + w * 0.25} cy={y + h * 0.5}
+            r={Math.min(w, h) * 0.06}
+            fill={shape.stroke_color}
+            opacity={0.6}
+          />
+        </g>
+      );
+
+    case 'block_door_double':
+      return (
+        <g>
+          <rect
+            x={x} y={y} width={w} height={h}
+            rx={Math.min(w, h) * 0.08}
+            fill={shape.fill_color}
+            stroke={shape.stroke_color}
+            strokeWidth={shape.stroke_width * 0.15}
+            opacity={shape.opacity}
+          />
+          {/* Left door arc */}
+          <path
+            d={`M ${x + w * 0.5} ${y + h * 0.85} A ${w * 0.35} ${w * 0.35} 0 0 0 ${x + w * 0.15} ${y + h * 0.85}`}
+            fill="none"
+            stroke={shape.stroke_color}
+            strokeWidth={0.15}
+            strokeDasharray="0.5 0.3"
+            opacity={0.5}
+          />
+          {/* Right door arc */}
+          <path
+            d={`M ${x + w * 0.5} ${y + h * 0.85} A ${w * 0.35} ${w * 0.35} 0 0 1 ${x + w * 0.85} ${y + h * 0.85}`}
+            fill="none"
+            stroke={shape.stroke_color}
+            strokeWidth={0.15}
+            strokeDasharray="0.5 0.3"
+            opacity={0.5}
+          />
+          {/* Center divider */}
+          <line x1={x + w * 0.5} y1={y + h * 0.1} x2={x + w * 0.5} y2={y + h * 0.9}
+            stroke={shape.stroke_color} strokeWidth={0.12} opacity={0.4} />
+          {/* Door knobs */}
+          <circle cx={x + w * 0.38} cy={y + h * 0.5} r={Math.min(w, h) * 0.05} fill={shape.stroke_color} opacity={0.6} />
+          <circle cx={x + w * 0.62} cy={y + h * 0.5} r={Math.min(w, h) * 0.05} fill={shape.stroke_color} opacity={0.6} />
+        </g>
+      );
+
     case 'block_sliding_door':
       return (
         <g>
@@ -568,6 +636,53 @@ export default function BlockRenderer({ shape, allShapes = [], isViewer, avgRati
             fontSize={Math.min(w, h) * 0.13} fill="#999"
             style={{ pointerEvents: 'none', userSelect: 'none' }}
           >냉장고</text>
+        </g>
+      );
+    }
+
+    case 'block_seat_point': {
+      const seatR = Math.min(w, h) / 2;
+      const dirRad = shape.view_direction != null
+        ? ((shape.view_direction - 90) * Math.PI) / 180
+        : null;
+      return (
+        <g opacity={shape.opacity}>
+          <defs>
+            <radialGradient id={gradId} cx="40%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#F8E0DB" />
+              <stop offset="100%" stopColor="#E8B4AC" />
+            </radialGradient>
+          </defs>
+          {/* Seat dot */}
+          <ellipse
+            cx={x + w / 2} cy={y + h / 2}
+            rx={seatR} ry={seatR}
+            fill={`url(#${gradId})`}
+            stroke={shape.stroke_color}
+            strokeWidth={shape.stroke_width * 0.15}
+          />
+          {/* Direction indicator line */}
+          {dirRad !== null && (
+            <line
+              x1={x + w / 2}
+              y1={y + h / 2}
+              x2={x + w / 2 + Math.cos(dirRad) * seatR * 0.9}
+              y2={y + h / 2 + Math.sin(dirRad) * seatR * 0.9}
+              stroke={shape.stroke_color}
+              strokeWidth={0.2}
+              strokeLinecap="round"
+              opacity={0.6}
+            />
+          )}
+          {/* Seat icon */}
+          <text
+            x={x + w / 2} y={y + h / 2}
+            textAnchor="middle" dominantBaseline="central"
+            fontSize={Math.min(w, h) * 0.35}
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >💺</text>
+          {renderLabel(y + h + Math.min(w, h) * 0.15)}
+          {renderStats()}
         </g>
       );
     }

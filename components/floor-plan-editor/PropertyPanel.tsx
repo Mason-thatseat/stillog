@@ -190,6 +190,42 @@ export default function PropertyPanel({
         </div>
       )}
 
+      {/* Rotation */}
+      <div>
+        <label className="block text-xs text-foreground-muted mb-1">회전</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={0}
+            max={360}
+            step={15}
+            value={shape.rotation || 0}
+            onChange={(e) => onUpdate({ rotation: parseInt(e.target.value) || 0 })}
+            className="flex-1 accent-accent"
+          />
+          <span className="text-[10px] text-foreground-muted w-8 text-right">{shape.rotation || 0}°</span>
+        </div>
+      </div>
+
+      {/* View Direction (seat blocks only) */}
+      {isSeat && (
+        <div>
+          <label className="block text-xs text-foreground-muted mb-1">시점 방향</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={0}
+              max={360}
+              step={15}
+              value={shape.view_direction ?? 0}
+              onChange={(e) => onUpdate({ view_direction: parseInt(e.target.value) || 0 })}
+              className="flex-1 accent-accent"
+            />
+            <span className="text-[10px] text-foreground-muted w-8 text-right">{shape.view_direction ?? 0}°</span>
+          </div>
+        </div>
+      )}
+
       {/* Opacity */}
       <div>
         <label className="block text-xs text-foreground-muted mb-1">투명도</label>

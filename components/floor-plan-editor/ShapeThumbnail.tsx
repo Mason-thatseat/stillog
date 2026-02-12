@@ -98,6 +98,41 @@ export default function ShapeThumbnail({ type, size = 40 }: ShapeThumbnailProps)
         </>
       )}
 
+      {/* Block: Door inward */}
+      {type === 'block_door_in' && (
+        <>
+          <rect
+            x={pad} y={s * 0.3}
+            width={s - pad * 2} height={s * 0.4}
+            rx={2}
+            fill="#D4A574"
+            stroke="#8B6914"
+            strokeWidth={1.5}
+          />
+          <path
+            d={`M ${pad + 3} ${s * 0.35} A ${s * 0.3} ${s * 0.3} 0 0 0 ${s - pad - 3} ${s * 0.35}`}
+            fill="none" stroke="#8B6914" strokeWidth={0.8} strokeDasharray="2 1.5" opacity={0.5}
+          />
+        </>
+      )}
+
+      {/* Block: Door double */}
+      {type === 'block_door_double' && (
+        <>
+          <rect
+            x={pad} y={s * 0.3}
+            width={s - pad * 2} height={s * 0.4}
+            rx={2}
+            fill="#D4A574"
+            stroke="#8B6914"
+            strokeWidth={1.5}
+          />
+          <line x1={s / 2} y1={s * 0.35} x2={s / 2} y2={s * 0.65} stroke="#8B6914" strokeWidth={0.6} opacity={0.4} />
+          <circle cx={s * 0.38} cy={s * 0.5} r={1.5} fill="#8B6914" opacity={0.5} />
+          <circle cx={s * 0.62} cy={s * 0.5} r={1.5} fill="#8B6914" opacity={0.5} />
+        </>
+      )}
+
       {/* Block: Sliding door */}
       {type === 'block_sliding_door' && (
         <>
@@ -322,6 +357,28 @@ export default function ShapeThumbnail({ type, size = 40 }: ShapeThumbnailProps)
           />
           <text x={s / 2} y={s / 2 + 2} textAnchor="middle" fontSize={14}>
             💧
+          </text>
+        </>
+      )}
+
+      {/* Block: Seat Point */}
+      {type === 'block_seat_point' && (
+        <>
+          <defs>
+            <radialGradient id="seatPointGradThumb" cx="40%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#F8E0DB" />
+              <stop offset="100%" stopColor="#E8B4AC" />
+            </radialGradient>
+          </defs>
+          <ellipse
+            cx={s / 2} cy={s / 2}
+            rx={(s - pad * 2) / 2.5} ry={(s - pad * 2) / 2.5}
+            fill="url(#seatPointGradThumb)"
+            stroke="#C4837A"
+            strokeWidth={1.5}
+          />
+          <text x={s / 2} y={s / 2 + 3} textAnchor="middle" fontSize={14}>
+            💺
           </text>
         </>
       )}

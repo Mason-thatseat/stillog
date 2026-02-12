@@ -36,71 +36,89 @@ export default function ShapeRenderer({
     onClick,
   };
 
-  switch (shape_type) {
-    case 'rectangle':
-      return (
-        <rect
-          x={x} y={y}
-          width={w} height={h}
-          rx={Math.min(w, h) * 0.05}
-          fill={fill_color}
-          stroke={stroke_color}
-          strokeWidth={sw}
-          {...commonProps}
-        />
-      );
+  // Rotation transform
+  const rotation = shape.rotation || 0;
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const rotationTransform = rotation ? `rotate(${rotation}, ${cx}, ${cy})` : undefined;
 
-    case 'circle':
-      return (
-        <ellipse
-          cx={x + w / 2}
-          cy={y + h / 2}
-          rx={w / 2}
-          ry={h / 2}
-          fill={fill_color}
-          stroke={stroke_color}
-          strokeWidth={sw}
-          {...commonProps}
-        />
-      );
-
-    case 'triangle':
-      return (
-        <polygon
-          points={`${x + w / 2},${y} ${x + w},${y + h} ${x},${y + h}`}
-          fill={fill_color}
-          stroke={stroke_color}
-          strokeWidth={sw}
-          {...commonProps}
-        />
-      );
-
-    case 'line':
-      return (
-        <line
-          x1={x} y1={y + h / 2}
-          x2={x + w} y2={y + h / 2}
-          stroke={stroke_color}
-          strokeWidth={Math.max(sw, 0.3)}
-          strokeLinecap="round"
-          {...commonProps}
-        />
-      );
-
-    default:
-      if (isBlockType(shape_type)) {
+  const renderShape = () => {
+    switch (shape_type) {
+      case 'rectangle':
         return (
-          <g {...commonProps}>
-            <BlockRenderer
-              shape={shape}
-              allShapes={allShapes}
-              avgRating={avgRating}
-              postsCount={postsCount}
-              isViewer={isViewer}
-            />
-          </g>
+          <rect
+            x={x} y={y}
+            width={w} height={h}
+            rx={Math.min(w, h) * 0.05}
+            fill={fill_color}
+            stroke={stroke_color}
+            strokeWidth={sw}
+            {...commonProps}
+          />
         );
-      }
-      return null;
+
+      case 'circle':
+        return (
+          <ellipse
+            cx={x + w / 2}
+            cy={y + h / 2}
+            rx={w / 2}
+            ry={h / 2}
+            fill={fill_color}
+            stroke={stroke_color}
+            strokeWidth={sw}
+            {...commonProps}
+          />
+        );
+
+      case 'triangle':
+        return (
+          <polygon
+            points={`${x + w / 2},${y} ${x + w},${y + h} ${x},${y + h}`}
+            fill={fill_color}
+            stroke={stroke_color}
+            strokeWidth={sw}
+            {...commonProps}
+          />
+        );
+
+      case 'line':
+        return (
+          <line
+            x1={x} y1={y + h / 2}
+            x2={x + w} y2={y + h / 2}
+            stroke={stroke_color}
+            strokeWidth={Math.max(sw, 0.3)}
+            strokeLinecap="round"
+            {...commonProps}
+          />
+        );
+
+      default:
+        if (isBlockType(shape_type)) {
+          return (
+            <g {...commonProps}>
+              <BlockRenderer
+                shape={shape}
+                allShapes={allShapes}
+                avgRating={avgRating}
+                postsCount={postsCount}
+                isViewer={isViewer}
+              />
+            </g>
+          );
+        }
+        return null;
+    }
+  };
+
+  if (rotationTransform) {
+    return (
+      <g transform={rotationTransform}>
+        {renderShape()}
+      </g>
+    );
   }
+
+  return renderShape();
 }

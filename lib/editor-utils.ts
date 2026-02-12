@@ -22,13 +22,37 @@ export function snapToGrid(value: number, gridSize: number): number {
   return Math.round(value / gridSize) * gridSize;
 }
 
-// Hit test: check if a point is inside a shape
+// Rotate a point around a center by -angle (inverse rotation for hit testing)
+function rotatePoint(px: number, py: number, cx: number, cy: number, angleDeg: number): { x: number; y: number } {
+  const rad = (-angleDeg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const dx = px - cx;
+  const dy = py - cy;
+  return {
+    x: cx + dx * cos - dy * sin,
+    y: cy + dx * sin + dy * cos,
+  };
+}
+
+// Hit test: check if a point is inside a shape (rotation-aware)
 export function hitTestShape(
   px: number,
   py: number,
   shape: EditorShape
 ): boolean {
-  const { x_percent: x, y_percent: y, width_percent: w, height_percent: h, shape_type } = shape;
+  const { x_percent: x, y_percent: y, width_percent: w, height_percent: h, shape_type, rotation } = shape;
+
+  // If shape is rotated, transform the test point into the shape's local coordinate space
+  let testX = px;
+  let testY = py;
+  if (rotation) {
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const rotated = rotatePoint(px, py, cx, cy, rotation);
+    testX = rotated.x;
+    testY = rotated.y;
+  }
 
   switch (shape_type) {
     case 'circle':
@@ -38,13 +62,13 @@ export function hitTestShape(
       const cy = y + h / 2;
       const rx = w / 2;
       const ry = h / 2;
-      return ((px - cx) ** 2) / (rx ** 2) + ((py - cy) ** 2) / (ry ** 2) <= 1;
+      return ((testX - cx) ** 2) / (rx ** 2) + ((testY - cy) ** 2) / (ry ** 2) <= 1;
     }
     case 'line':
-      return distanceToLine(px, py, x, y, x + w, y + h) < 1.5;
+      return distanceToLine(testX, testY, x, y, x + w, y + h) < 1.5;
     default:
       // Rectangle, triangle, block types — bounding box check
-      return px >= x && px <= x + w && py >= y && py <= y + h;
+      return testX >= x && testX <= x + w && testY >= y && testY <= y + h;
   }
 }
 

@@ -8,14 +8,16 @@ export interface Profile {
 
 export type ShapeType =
   | 'rectangle' | 'circle' | 'triangle' | 'line'
-  | 'block_room' | 'block_window' | 'block_door' | 'block_sliding_door' | 'block_wall' | 'block_partition'
-  | 'block_table_2' | 'block_table_4' | 'block_table_6' | 'block_table_round'
-  | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser' | 'block_fridge';
-
-export type BlockType = Extract<ShapeType,
-  | 'block_room' | 'block_window' | 'block_door' | 'block_sliding_door' | 'block_wall' | 'block_partition'
+  | 'block_room' | 'block_window' | 'block_door' | 'block_door_in' | 'block_door_double' | 'block_sliding_door' | 'block_wall' | 'block_partition'
   | 'block_table_2' | 'block_table_4' | 'block_table_6' | 'block_table_round'
   | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser' | 'block_fridge'
+  | 'block_seat_point';
+
+export type BlockType = Extract<ShapeType,
+  | 'block_room' | 'block_window' | 'block_door' | 'block_door_in' | 'block_door_double' | 'block_sliding_door' | 'block_wall' | 'block_partition'
+  | 'block_table_2' | 'block_table_4' | 'block_table_6' | 'block_table_round'
+  | 'block_kitchen' | 'block_selfbar' | 'block_restroom' | 'block_dispenser' | 'block_fridge'
+  | 'block_seat_point'
 >;
 
 export interface FloorPlanShape {
@@ -38,7 +40,10 @@ export interface FloorPlanShape {
 
 export interface EditorShape extends FloorPlanShape {
   isNew?: boolean;
+  view_direction?: number; // 0~360, seat viewing direction in degrees
 }
+
+export type EditorMode = 'sketch' | 'structure';
 
 export interface TableShapeWithStats extends FloorPlanShape {
   seat_id?: string;
