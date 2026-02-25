@@ -19,7 +19,7 @@ let kakaoScriptLoading = false;
 const kakaoLoadCallbacks: (() => void)[] = [];
 
 function loadKakaoScript(appKey: string): Promise<void> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (kakaoScriptLoaded && window.kakao?.maps) {
       resolve();
       return;
@@ -39,6 +39,10 @@ function loadKakaoScript(appKey: string): Promise<void> {
         kakaoLoadCallbacks.forEach((cb) => cb());
         kakaoLoadCallbacks.length = 0;
       });
+    };
+    script.onerror = () => {
+      kakaoScriptLoading = false;
+      reject(new Error('Kakao Maps SDK 로드 실패'));
     };
     document.head.appendChild(script);
   });
@@ -147,6 +151,8 @@ export default function KakaoMapPicker({
       }
 
       setMapReady(true);
+    }).catch(() => {
+      if (!cancelled) setMapError('지도를 불러올 수 없습니다. 페이지를 새로고침해 주세요.');
     });
 
     return () => {
