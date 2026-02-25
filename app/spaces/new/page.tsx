@@ -101,7 +101,7 @@ export default function NewSpacePage() {
             .map((s, idx) => ({
               space_id: space.id,
               shape_id: s.id,
-              label: s.label || `좌석 ${idx + 1}`,
+              label: s.label != null ? s.label : `좌석 ${idx + 1}`,
               x_percent: s.x_percent + s.width_percent / 2,
               y_percent: s.y_percent + s.height_percent / 2,
             }));

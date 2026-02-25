@@ -163,6 +163,14 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
         <div className="flex gap-2">
+          {isOwner && (
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/spaces/${id}/edit`)}
+            >
+              배치도 수정
+            </Button>
+          )}
           {isOwner && (hasFloorPlanImage || hasBlockShapes) && (
             <Button
               variant={isEditing ? 'primary' : 'outline'}
