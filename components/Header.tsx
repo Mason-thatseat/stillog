@@ -1,23 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from './AuthProvider';
 import { createClient } from '@/lib/supabase/client';
 import Button from './ui/Button';
 
 export default function Header() {
-  const { user, profile, signOut } = useAuth();
-  const [showAuth, setShowAuth] = useState(false);
+  const { user, profile, signOut, loading: authLoading } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [stats, setStats] = useState({ posts: 0, spaces: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Delay showing auth UI to let auth resolve first
-  useEffect(() => {
-    const timer = setTimeout(() => setShowAuth(true), 400);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Fetch user stats when dropdown opens
   useEffect(() => {
@@ -85,9 +79,11 @@ export default function Header() {
                   className="flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground hover:bg-background-subtle rounded-lg px-2.5 py-1.5 transition-colors"
                 >
                   {profile?.profile_image ? (
-                    <img
+                    <Image
                       src={profile.profile_image}
                       alt={profile.nickname}
+                      width={28}
+                      height={28}
                       className="w-7 h-7 rounded-full object-cover ring-1 ring-border"
                     />
                   ) : (
@@ -147,7 +143,7 @@ export default function Header() {
                 )}
               </div>
             </div>
-          ) : showAuth ? (
+          ) : !authLoading ? (
             <Link href="/auth" className="ml-1">
               <Button size="sm">로그인</Button>
             </Link>

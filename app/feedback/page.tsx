@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import Button from '@/components/ui/Button';
+import { formatRelativeTime } from '@/lib/utils';
 
 interface FeedbackItem {
   id: string;
@@ -22,6 +24,7 @@ export default function FeedbackPage() {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const supabase = createClient();
   const { user } = useAuth();
@@ -58,23 +61,10 @@ export default function FeedbackPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('삭제하시겠습니까?')) return;
-    await supabase.from('feedback').delete().eq('id', id);
+    if (!user) return;
+    await supabase.from('feedback').delete().eq('id', id).eq('user_id', user.id);
+    setConfirmDeleteId(null);
     fetchFeedbacks();
-  };
-
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}시간 전`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days}일 전`;
-    return date.toLocaleDateString('ko-KR');
   };
 
   return (
@@ -137,9 +127,11 @@ export default function FeedbackPage() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   {fb.profile?.profile_image ? (
-                    <img
+                    <Image
                       src={fb.profile.profile_image}
                       alt={fb.profile.nickname}
+                      width={24}
+                      height={24}
                       className="w-6 h-6 rounded-full object-cover ring-1 ring-border"
                     />
                   ) : (
@@ -151,16 +143,34 @@ export default function FeedbackPage() {
                     {fb.profile?.nickname || '익명'}
                   </span>
                   <span className="text-xs text-foreground-muted">
-                    {formatTime(fb.created_at)}
+                    {formatRelativeTime(fb.created_at)}
                   </span>
                 </div>
                 {user?.id === fb.user_id && (
-                  <button
-                    onClick={() => handleDelete(fb.id)}
-                    className="text-xs text-foreground-muted hover:text-red-500 transition-colors"
-                  >
-                    삭제
-                  </button>
+                  confirmDeleteId === fb.id ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-red-500">삭제할까요?</span>
+                      <button
+                        onClick={() => handleDelete(fb.id)}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium transition-colors"
+                      >
+                        확인
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="text-xs text-foreground-muted hover:text-foreground transition-colors"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(fb.id)}
+                      className="text-xs text-foreground-muted hover:text-red-500 transition-colors"
+                    >
+                      삭제
+                    </button>
+                  )
                 )}
               </div>
               <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">

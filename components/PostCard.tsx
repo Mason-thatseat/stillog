@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Post } from '@/lib/types';
+import { formatDate } from '@/lib/utils';
 
 interface PostCardProps {
   post: Post;
@@ -27,18 +28,16 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function PostCard({ post, showSeatInfo = false }: PostCardProps) {
-  const formattedDate = new Date(post.created_at).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const formattedDate = formatDate(post.created_at);
 
   return (
-    <article className="group bg-white rounded-2xl border border-border overflow-hidden hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300">
+    <article className="group bg-white rounded-2xl border border-border overflow-hidden hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300 relative">
+      {/* Stretched link covers the whole card; inner links sit above it via relative z-10 */}
+      <Link href={`/posts/${post.id}`} className="absolute inset-0 z-0" aria-label="포스트 상세 보기" />
       <div className="aspect-[4/3] relative bg-background-subtle overflow-hidden">
         <Image
           src={post.image_url}
-          alt="좌석에서 본 풍경"
+          alt={post.content ? post.content.substring(0, 50) : '좌석에서 본 풍경'}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
         />
@@ -55,7 +54,7 @@ export default function PostCard({ post, showSeatInfo = false }: PostCardProps) 
         {showSeatInfo && post.seat?.space && (
           <Link
             href={`/spaces/${post.seat.space.id}`}
-            className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent/80 font-medium mb-2 transition-colors"
+            className="relative z-10 inline-flex items-center gap-1 text-xs text-accent hover:text-accent/80 font-medium mb-2 transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -74,9 +73,11 @@ export default function PostCard({ post, showSeatInfo = false }: PostCardProps) 
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
           <div className="flex items-center gap-2">
             {post.profile?.profile_image ? (
-              <img
+              <Image
                 src={post.profile.profile_image}
                 alt={post.profile.nickname}
+                width={24}
+                height={24}
                 className="w-6 h-6 rounded-full object-cover ring-1 ring-border"
               />
             ) : (

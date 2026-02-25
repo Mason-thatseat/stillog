@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import SpaceCard from '@/components/SpaceCard';
 import Button from '@/components/ui/Button';
+import { transformSpacesWithCounts } from '@/lib/utils';
 
 export default async function SpacesPage() {
   const supabase = await createClient();
@@ -15,12 +16,7 @@ export default async function SpacesPage() {
     `)
     .order('created_at', { ascending: false });
 
-  const spacesWithCounts = spaces?.map((space) => ({
-    ...space,
-    seats_count: space.seats?.[0]?.count || 0,
-    posts_count: space.posts?.reduce((acc: number, seat: { posts: { count: number }[] }) =>
-      acc + (seat.posts?.[0]?.count || 0), 0) || 0,
-  })) || [];
+  const spacesWithCounts = transformSpacesWithCounts(spaces);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">

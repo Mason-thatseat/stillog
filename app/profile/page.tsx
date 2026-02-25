@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { formatDate, formatDateTime, transformSpacesWithCounts } from '@/lib/utils';
 import { useAuth } from '@/components/AuthProvider';
 import PostCard from '@/components/PostCard';
 import SpaceCard from '@/components/SpaceCard';
@@ -29,6 +31,7 @@ export default function ProfilePage() {
   const [nickname, setNickname] = useState('');
   const [contentLoading, setContentLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -85,14 +88,7 @@ export default function ProfilePage() {
 
     setPosts(postsResult.data || []);
 
-    const spacesWithCounts = spacesResult.data?.map((space) => ({
-      ...space,
-      seats_count: space.seats?.[0]?.count || 0,
-      posts_count: space.posts?.reduce((acc: number, seat: { posts: { count: number }[] }) =>
-        acc + (seat.posts?.[0]?.count || 0), 0) || 0,
-    })) || [];
-
-    setSpaces(spacesWithCounts);
+    setSpaces(transformSpacesWithCounts(spacesResult.data));
     setFeedbacks(feedbackResult.data || []);
     setContentLoading(false);
   };
@@ -101,6 +97,7 @@ export default function ProfilePage() {
     if (!user) return;
 
     setSaving(true);
+    setProfileError('');
 
     const { error } = await supabase
       .from('profiles')
@@ -110,6 +107,8 @@ export default function ProfilePage() {
     if (!error) {
       setIsEditing(false);
       router.refresh();
+    } else {
+      setProfileError('닉네임 저장에 실패했습니다. 다시 시도해주세요.');
     }
 
     setSaving(false);
@@ -142,62 +141,44 @@ export default function ProfilePage() {
 
       router.refresh();
     } catch (err) {
-      console.error('Avatar upload failed:', err);
+      setProfileError(err instanceof Error ? err.message : '이미지 업로드에 실패했습니다. 다시 시도해주세요.');
     }
 
     setSaving(false);
   };
 
-  const buildTimeline = (): TimelineItem[] => {
-    const items: TimelineItem[] = [];
-
-    posts.forEach((post) => {
-      items.push({
+  const timeline = useMemo((): TimelineItem[] => {
+    const items: TimelineItem[] = [
+      ...posts.map((post) => ({
         id: `post-${post.id}`,
-        type: 'post',
+        type: 'post' as const,
         title: '포스트 작성',
         description: post.content || '(내용 없음)',
         created_at: post.created_at,
-      });
-    });
-
-    spaces.forEach((space) => {
-      items.push({
+      })),
+      ...spaces.map((space) => ({
         id: `space-${space.id}`,
-        type: 'space',
+        type: 'space' as const,
         title: '공간 등록',
         description: space.name,
         created_at: space.created_at,
-      });
-    });
-
-    feedbacks.forEach((fb) => {
-      items.push({
+      })),
+      ...feedbacks.map((fb) => ({
         id: `feedback-${fb.id}`,
-        type: 'feedback',
+        type: 'feedback' as const,
         title: '피드백 작성',
         description: fb.content,
         created_at: fb.created_at,
-      });
-    });
+      })),
+    ];
+    return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [posts, spaces, feedbacks]);
 
-    items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return items;
-  };
-
-  const avgRating = posts.length > 0
-    ? (posts.reduce((sum, p) => sum + (p.rating || 0), 0) / posts.filter(p => p.rating).length) || 0
+  const ratedPosts = posts.filter(p => p.rating != null && p.rating > 0);
+  const avgRating = ratedPosts.length > 0
+    ? ratedPosts.reduce((sum, p) => sum + p.rating!, 0) / ratedPosts.length
     : 0;
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-  };
-
-  const formatDateTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  };
 
   if (authLoading) {
     return (
@@ -276,9 +257,11 @@ export default function ProfilePage() {
       <div className="bg-white rounded-xl border border-border p-6 mb-8">
         <div className="flex items-center gap-4">
           {profile?.profile_image ? (
-            <img
+            <Image
               src={profile.profile_image}
               alt={displayName}
+              width={64}
+              height={64}
               className="w-16 h-16 rounded-full object-cover"
             />
           ) : (
@@ -392,9 +375,9 @@ export default function ProfilePage() {
               {/* 타임라인 */}
               <section>
                 <h2 className="text-base font-semibold text-foreground mb-4">활동 타임라인</h2>
-                {buildTimeline().length > 0 ? (
+                {timeline.length > 0 ? (
                   <div className="space-y-3">
-                    {buildTimeline().map((item) => (
+                    {timeline.map((item) => (
                       <div
                         key={item.id}
                         className="flex items-start gap-3 bg-white rounded-lg border border-border p-4"
@@ -439,9 +422,11 @@ export default function ProfilePage() {
                     className="hidden"
                   />
                   {profile?.profile_image ? (
-                    <img
+                    <Image
                       src={profile.profile_image}
                       alt={displayName}
+                      width={80}
+                      height={80}
                       className="w-20 h-20 rounded-full object-cover"
                     />
                   ) : (
@@ -449,14 +434,19 @@ export default function ProfilePage() {
                       {displayInitial}
                     </div>
                   )}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    loading={saving}
-                  >
-                    이미지 변경
-                  </Button>
+                  <div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      loading={saving}
+                    >
+                      이미지 변경
+                    </Button>
+                    {profileError && !isEditing && (
+                      <p className="text-sm text-red-500 mt-2">{profileError}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -470,6 +460,9 @@ export default function ProfilePage() {
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
                     />
+                    {profileError && (
+                      <p className="text-sm text-red-500">{profileError}</p>
+                    )}
                     <div className="flex gap-2">
                       <Button onClick={handleUpdateProfile} loading={saving} size="sm">
                         저장
@@ -477,6 +470,7 @@ export default function ProfilePage() {
                       <Button variant="ghost" size="sm" onClick={() => {
                         setIsEditing(false);
                         setNickname(profile?.nickname || '');
+                        setProfileError('');
                       }}>
                         취소
                       </Button>

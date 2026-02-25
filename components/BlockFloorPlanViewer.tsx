@@ -10,12 +10,16 @@ interface BlockFloorPlanViewerProps {
   shapes: FloorPlanShape[];
   seats: Seat[];
   onSeatClick?: (seat: Seat) => void;
+  canvasWidth?: number;
+  canvasHeight?: number;
 }
 
 export default function BlockFloorPlanViewer({
   shapes,
   seats,
   onSeatClick,
+  canvasWidth = 100,
+  canvasHeight = 100,
 }: BlockFloorPlanViewerProps) {
   const sortedShapes = useMemo(
     () => [...shapes].sort((a, b) => a.z_index - b.z_index),
@@ -48,8 +52,8 @@ export default function BlockFloorPlanViewer({
   const handleCanvasClick = (e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const x = ((e.clientX - rect.left) / rect.width) * canvasWidth;
+    const y = ((e.clientY - rect.top) / rect.height) * canvasHeight;
 
     // Hit test in reverse z-order
     for (let i = sortedShapes.length - 1; i >= 0; i--) {
@@ -66,13 +70,13 @@ export default function BlockFloorPlanViewer({
   return (
     <div className="w-full overflow-hidden rounded-xl border border-border bg-white shadow-sm">
       <svg
-        viewBox="0 0 100 100"
-        className="w-full aspect-square"
+        viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
+        className="w-full"
+        style={{ aspectRatio: `${canvasWidth}/${canvasHeight}`, touchAction: 'none' }}
         onClick={handleCanvasClick}
-        style={{ touchAction: 'none' }}
       >
         {/* Background */}
-        <rect width="100" height="100" fill="#FEFCFA" />
+        <rect width={canvasWidth} height={canvasHeight} fill="#FEFCFA" />
 
         {/* Shapes */}
         {sortedShapes.map((shape) => {

@@ -58,6 +58,7 @@ export default function KakaoMapPicker({
   const [searching, setSearching] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState('');
 
   // Keep callback ref up to date
   onLocationChangeRef.current = onLocationChange;
@@ -166,10 +167,11 @@ export default function KakaoMapPicker({
   // GPS
   function handleGPS() {
     if (!navigator.geolocation) {
-      alert('이 브라우저에서는 위치 정보를 사용할 수 없습니다.');
+      setMapError('이 브라우저에서는 위치 정보를 사용할 수 없습니다.');
       return;
     }
 
+    setMapError('');
     setGpsLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -181,7 +183,7 @@ export default function KakaoMapPicker({
         setGpsLoading(false);
       },
       () => {
-        alert('위치 정보를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
+        setMapError('위치 정보를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
         setGpsLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -192,6 +194,7 @@ export default function KakaoMapPicker({
   function handleSearch() {
     if (!searchQuery.trim() || !geocoderRef.current) return;
 
+    setMapError('');
     setSearching(true);
 
     geocoderRef.current.addressSearch(
@@ -226,7 +229,7 @@ export default function KakaoMapPicker({
               onLocationChangeRef.current(lat, lng, addr);
               mapInstance.current?.setLevel(3);
             } else {
-              alert('주소를 찾을 수 없습니다. 다시 시도해주세요.');
+              setMapError('주소를 찾을 수 없습니다. 다시 시도해주세요.');
             }
           });
         }
@@ -280,6 +283,10 @@ export default function KakaoMapPicker({
         ref={mapRef}
         className="w-full aspect-[4/3] md:aspect-[16/9] rounded-xl border border-border overflow-hidden bg-background-subtle"
       />
+
+      {mapError && (
+        <p className="text-sm text-red-500">{mapError}</p>
+      )}
 
       <p className="text-xs text-foreground-muted">
         지도를 클릭하거나 핀을 드래그하여 위치를 지정할 수 있습니다

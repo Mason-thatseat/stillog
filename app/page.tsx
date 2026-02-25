@@ -3,28 +3,22 @@ import { createClient } from '@/lib/supabase/server';
 import SpaceCard from '@/components/SpaceCard';
 import PostCard from '@/components/PostCard';
 import Button from '@/components/ui/Button';
+import { transformSpacesWithCounts } from '@/lib/utils';
 
 export default async function HomePage() {
   const supabase = await createClient();
 
-  // Fetch popular spaces
-  const { data: spaces } = await supabase
-    .from('spaces')
-    .select(`
-      *,
-      seats:seats(count),
-      posts:seats(posts(count))
-    `)
-    .order('created_at', { ascending: false })
-    .limit(6);
+  // Fetch popular spaces + total count in parallel
+  const [{ data: spaces }, { count: totalSpacesCount }] = await Promise.all([
+    supabase
+      .from('spaces')
+      .select('*, seats:seats(count), posts:seats(posts(count))')
+      .order('created_at', { ascending: false })
+      .limit(6),
+    supabase.from('spaces').select('*', { count: 'exact', head: true }),
+  ]);
 
-  // Transform data to include counts
-  const spacesWithCounts = spaces?.map((space) => ({
-    ...space,
-    seats_count: space.seats?.[0]?.count || 0,
-    posts_count: space.posts?.reduce((acc: number, seat: { posts: { count: number }[] }) =>
-      acc + (seat.posts?.[0]?.count || 0), 0) || 0,
-  })) || [];
+  const spacesWithCounts = transformSpacesWithCounts(spaces);
 
   // Fetch recent posts
   const { data: posts } = await supabase
@@ -78,7 +72,7 @@ export default async function HomePage() {
           {/* Stats */}
           <div className="flex justify-center gap-12 mt-16 animate-fade-in-up animation-delay-700">
             <div className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-foreground">{spacesWithCounts.length || 0}</p>
+              <p className="text-2xl md:text-3xl font-bold text-foreground">{totalSpacesCount ?? 0}</p>
               <p className="text-sm text-foreground-muted mt-1">등록된 공간</p>
             </div>
             <div className="w-px bg-border" />

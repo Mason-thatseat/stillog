@@ -36,20 +36,11 @@ function NewPostForm() {
   }, [spaceId, seatId]);
 
   const fetchSeatInfo = async () => {
-    const { data: spaceData } = await supabase
-      .from('spaces')
-      .select('*')
-      .eq('id', spaceId)
-      .single();
-
+    const [{ data: spaceData }, { data: seatData }] = await Promise.all([
+      supabase.from('spaces').select('*').eq('id', spaceId).single(),
+      supabase.from('seats').select('*').eq('id', seatId).single(),
+    ]);
     setSpace(spaceData);
-
-    const { data: seatData } = await supabase
-      .from('seats')
-      .select('*')
-      .eq('id', seatId)
-      .single();
-
     setSeat(seatData);
   };
 
@@ -98,6 +89,8 @@ function NewPostForm() {
     setLoading(true);
     setError('');
 
+    let uploadedFileName: string | null = null;
+
     try {
       // Upload image
       const fileExt = imageFile.name.split('.').pop();
@@ -108,6 +101,7 @@ function NewPostForm() {
         .upload(fileName, imageFile);
 
       if (uploadError) throw uploadError;
+      uploadedFileName = fileName;
 
       const { data: { publicUrl } } = supabase.storage
         .from('post-images')
@@ -125,9 +119,14 @@ function NewPostForm() {
         });
 
       if (insertError) throw insertError;
+      uploadedFileName = null; // insert 성공, 롤백 불필요
 
       router.push(`/spaces/${spaceId}/seats/${seatId}`);
     } catch (err) {
+      // DB insert 실패 시 업로드된 이미지 파일 정리
+      if (uploadedFileName) {
+        await supabase.storage.from('post-images').remove([uploadedFileName]);
+      }
       setError(err instanceof Error ? err.message : '오류가 발생했습니다');
     } finally {
       setLoading(false);

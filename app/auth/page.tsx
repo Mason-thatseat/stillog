@@ -6,6 +6,18 @@ import { createClient } from '@/lib/supabase/client';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
+function getAuthErrorMessage(message: string): string {
+  if (message.includes('Invalid login credentials')) return '이메일 또는 비밀번호가 올바르지 않습니다';
+  if (message.includes('Email not confirmed')) return '이메일 인증이 완료되지 않았습니다. 받은 편지함을 확인해주세요';
+  if (message.includes('User already registered')) return '이미 가입된 이메일입니다';
+  if (message.includes('Password should be at least')) return '비밀번호는 6자 이상이어야 합니다';
+  if (message.includes('Unable to validate email address')) return '올바른 이메일 형식이 아닙니다';
+  if (message.includes('Email rate limit exceeded') || message.includes('Too many requests')) return '잠시 후 다시 시도해주세요';
+  if (message.includes('User not found')) return '등록되지 않은 이메일입니다';
+  if (message.includes('Signup requires a valid password')) return '비밀번호를 입력해주세요';
+  return '오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+}
+
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -13,6 +25,7 @@ export default function AuthPage() {
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailConfirmPending, setEmailConfirmPending] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
@@ -30,7 +43,7 @@ export default function AuthPage() {
         });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -40,11 +53,16 @@ export default function AuthPage() {
           },
         });
         if (error) throw error;
+        // session이 null이면 이메일 인증 대기 상태
+        if (!data.session) {
+          setEmailConfirmPending(true);
+          return;
+        }
       }
       router.push('/');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다');
+      setError(getAuthErrorMessage(err instanceof Error ? err.message : ''));
     } finally {
       setLoading(false);
     }
@@ -63,10 +81,34 @@ export default function AuthPage() {
       });
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다');
+      setError(getAuthErrorMessage(err instanceof Error ? err.message : ''));
       setLoading(false);
     }
   };
+
+  if (emailConfirmPending) {
+    return (
+      <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-3">이메일을 확인해주세요</h1>
+          <p className="text-foreground-muted mb-2">
+            <span className="font-medium text-foreground">{email}</span>으로 인증 메일을 보냈습니다.
+          </p>
+          <p className="text-sm text-foreground-muted mb-8">
+            받은 편지함에서 인증 링크를 클릭하면 가입이 완료됩니다.
+          </p>
+          <Button variant="outline" onClick={() => { setEmailConfirmPending(false); setIsLogin(true); }}>
+            로그인 화면으로
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">

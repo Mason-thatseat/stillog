@@ -1,8 +1,9 @@
 'use client';
 
 import type { EditorShape } from '@/lib/types';
-import { isBlockType, isSeatBlock, BLOCK_REGISTRY } from '@/lib/block-definitions';
+import { isBlockType, isSeatBlock, hasLabelField, BLOCK_REGISTRY } from '@/lib/block-definitions';
 import { COLOR_PALETTE, STROKE_PALETTE } from '@/lib/editor-utils';
+import Button from '@/components/ui/Button';
 
 interface PropertyPanelProps {
   shape: EditorShape | undefined;
@@ -34,13 +35,13 @@ export default function PropertyPanel({
   const blockDef = isBlock ? BLOCK_REGISTRY[shape.shape_type as keyof typeof BLOCK_REGISTRY] : null;
 
   // Block types: structure blocks have no label, furniture blocks have label
-  const showLabel = isSeat || shape.shape_type === 'rectangle';
+  const showLabel = hasLabelField(shape.shape_type);
   // Block types: structure blocks don't show fill/stroke pickers (colors are fixed)
   const showColorPickers = !isBlock || blockDef?.category === 'furniture' || blockDef?.category === 'facility';
   const isLine = shape.shape_type === 'line';
 
   return (
-    <div className="editor-property-panel p-4 bg-white rounded-xl border border-border shadow-sm space-y-4 overflow-y-auto max-h-[40vh] md:max-h-[70vh]">
+    <div className="editor-property-panel p-4 bg-white rounded-t-2xl md:rounded-xl border border-border shadow-2xl md:shadow-sm space-y-4 overflow-y-auto max-h-[55vh] md:max-h-[70vh]">
       <h3 className="font-semibold text-sm text-foreground">
         {blockDef ? blockDef.label : '속성'}
       </h3>
@@ -243,27 +244,23 @@ export default function PropertyPanel({
 
       {/* Z-order */}
       <div className="flex gap-2">
-        <button
-          onClick={onBringForward}
-          className="flex-1 text-xs py-1.5 px-2 border border-border rounded-lg hover:bg-background-subtle transition-colors"
-        >
+        <Button variant="outline" size="sm" onClick={onBringForward} className="flex-1 text-xs">
           앞으로
-        </button>
-        <button
-          onClick={onSendBackward}
-          className="flex-1 text-xs py-1.5 px-2 border border-border rounded-lg hover:bg-background-subtle transition-colors"
-        >
+        </Button>
+        <Button variant="outline" size="sm" onClick={onSendBackward} className="flex-1 text-xs">
           뒤로
-        </button>
+        </Button>
       </div>
 
       {/* Delete */}
-      <button
+      <Button
+        variant="outline"
+        size="sm"
         onClick={onDelete}
-        className="w-full text-xs py-2 px-3 text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+        className="w-full text-xs text-red-500 border-red-200 hover:bg-red-50"
       >
         삭제
-      </button>
+      </Button>
     </div>
   );
 }

@@ -28,50 +28,40 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
   const isOwner = user && space?.created_by === user.id;
 
   useEffect(() => {
-    fetchSpace();
+    let cancelled = false;
+
+    const fetchData = async () => {
+      setLoading(true);
+
+      const [
+        { data: spaceData },
+        { data: seatsData },
+        { data: shapesData },
+      ] = await Promise.all([
+        supabase.from('spaces').select('*').eq('id', id).single(),
+        supabase.from('seats').select('*, posts:posts(count)').eq('space_id', id),
+        supabase.from('floor_plan_shapes').select('*').eq('space_id', id).order('z_index', { ascending: true }),
+      ]);
+
+      if (cancelled) return;
+
+      if (spaceData) {
+        setSpace(spaceData);
+        setSeats(
+          seatsData?.map((seat) => ({
+            ...seat,
+            posts_count: seat.posts?.[0]?.count || 0,
+          })) || []
+        );
+        setShapes(shapesData || []);
+      }
+
+      setLoading(false);
+    };
+
+    fetchData();
+    return () => { cancelled = true; };
   }, [id]);
-
-  const fetchSpace = async () => {
-    setLoading(true);
-
-    // Fetch space
-    const { data: spaceData } = await supabase
-      .from('spaces')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (spaceData) {
-      setSpace(spaceData);
-
-      // Fetch seats with post counts
-      const { data: seatsData } = await supabase
-        .from('seats')
-        .select(`
-          *,
-          posts:posts(count)
-        `)
-        .eq('space_id', id);
-
-      const seatsWithCounts = seatsData?.map((seat) => ({
-        ...seat,
-        posts_count: seat.posts?.[0]?.count || 0,
-      })) || [];
-
-      setSeats(seatsWithCounts);
-
-      // Fetch shapes for block-based viewer
-      const { data: shapesData } = await supabase
-        .from('floor_plan_shapes')
-        .select('*')
-        .eq('space_id', id)
-        .order('z_index', { ascending: true });
-
-      setShapes(shapesData || []);
-    }
-
-    setLoading(false);
-  };
 
   const handleSeatClick = (seat: Seat) => {
     if (isEditing) {
@@ -86,13 +76,18 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
   const handleAddSeat = async (xPercent: number, yPercent: number) => {
     if (!user || !isOwner) return;
 
+    const nextNum = seats.reduce((max, s) => {
+      const n = parseInt(s.label?.replace(/\D/g, '') || '0', 10);
+      return Math.max(max, n);
+    }, 0) + 1;
+
     const { data: newSeat, error } = await supabase
       .from('seats')
       .insert({
         space_id: id,
         x_percent: xPercent,
         y_percent: yPercent,
-        label: `좌석 ${seats.length + 1}`,
+        label: `좌석 ${nextNum}`,
       })
       .select()
       .single();
@@ -168,7 +163,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
         <div className="flex gap-2">
-          {isOwner && hasFloorPlanImage && (
+          {isOwner && (hasFloorPlanImage || hasBlockShapes) && (
             <Button
               variant={isEditing ? 'primary' : 'outline'}
               onClick={() => setIsEditing(!isEditing)}
@@ -187,6 +182,8 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
               shapes={shapes}
               seats={seats}
               onSeatClick={handleSeatClick}
+              canvasWidth={space.canvas_width ?? 100}
+              canvasHeight={space.canvas_height ?? 100}
             />
           ) : hasFloorPlanImage ? (
             <FloorPlanCanvas

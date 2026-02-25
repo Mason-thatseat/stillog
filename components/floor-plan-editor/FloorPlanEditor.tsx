@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Button from '@/components/ui/Button';
 import type { ShapeType, EditorShape, FloorPlanShape, EditorMode } from '@/lib/types';
 import { isSeatBlock } from '@/lib/block-definitions';
 import { useEditorState } from '@/hooks/useEditorState';
@@ -17,7 +18,7 @@ import SketchToolbar from './SketchToolbar';
 interface FloorPlanEditorProps {
   spaceId: string;
   initialShapes?: FloorPlanShape[];
-  onSave: (shapes: EditorShape[]) => Promise<void>;
+  onSave: (shapes: EditorShape[], canvasRatio: number) => Promise<void>;
   saving?: boolean;
 }
 
@@ -40,6 +41,7 @@ export default function FloorPlanEditor({
   const [canvasRatio, setCanvasRatio] = useState(1);
   const [showDraftRestore, setShowDraftRestore] = useState(false);
   const [classificationBanner, setClassificationBanner] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const draftChecked = useRef(false);
 
   const {
@@ -160,12 +162,18 @@ export default function FloorPlanEditor({
     if (!selectedId) return;
     const shape = shapes.find(s => s.id === selectedId);
     if (shape && isSeatBlock(shape.shape_type)) {
-      if (!window.confirm('좌석 블록을 삭제하면 연결된 포스트도 사라질 수 있습니다. 삭제하시겠습니까?')) {
-        return;
-      }
+      setPendingDeleteId(selectedId);
+      return;
     }
     deleteShape(selectedId);
   }, [selectedId, shapes, deleteShape]);
+
+  const confirmDelete = useCallback(() => {
+    if (pendingDeleteId) {
+      deleteShape(pendingDeleteId);
+      setPendingDeleteId(null);
+    }
+  }, [pendingDeleteId, deleteShape]);
 
   const handleUpdateSelected = useCallback((updates: Partial<EditorShape>) => {
     if (selectedId) {
@@ -234,6 +242,7 @@ export default function FloorPlanEditor({
       } else if (e.key === 'Escape') {
         selectShape(null);
         setActiveTool(null);
+        setPendingDeleteId(null);
       } else if (e.ctrlKey && e.key === 'z') {
         e.preventDefault();
         undo();
@@ -293,6 +302,64 @@ export default function FloorPlanEditor({
         </div>
       )}
 
+      {pendingDeleteId && (
+        <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between gap-2">
+          <span className="text-xs text-red-700">좌석 블록을 삭제하면 연결된 포스트도 사라질 수 있습니다.</span>
+          <div className="flex gap-1.5 flex-shrink-0">
+            <Button size="sm" onClick={confirmDelete} className="text-xs bg-red-500 hover:bg-red-600 text-white border-0 h-7 px-2.5">
+              삭제
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setPendingDeleteId(null)} className="text-xs h-7 px-2.5">
+              취소
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Draft restore banner (공통) */}
+      {showDraftRestore && (
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-2">
+          <span className="text-xs text-amber-700">이전에 저장하지 않은 임시 데이터가 있습니다.</span>
+          <div className="flex gap-1.5">
+            <button
+              onClick={restoreDraft}
+              className="text-xs px-3 py-1 bg-amber-100 text-amber-800 rounded-md hover:bg-amber-200 transition-colors"
+            >
+              복원
+            </button>
+            <button
+              onClick={dismissDraft}
+              className="text-xs px-3 py-1 text-amber-600 hover:bg-amber-100 rounded-md transition-colors"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Canvas ratio selector (공통) */}
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-foreground-muted font-semibold">캔버스 비율</span>
+        {[
+          { label: '정사각형', ratio: 1 },
+          { label: '가로형', ratio: 0.75 },
+          { label: '세로형', ratio: 1.33 },
+          { label: '넓은 가로', ratio: 0.56 },
+        ].map(({ label, ratio }) => (
+          <button
+            key={label}
+            onClick={() => setCanvasRatio(ratio)}
+            className={`text-[10px] px-2 py-1 rounded-md transition-all ${
+              canvasRatio === ratio
+                ? 'bg-accent/15 text-accent ring-1 ring-accent/40'
+                : 'text-foreground-muted hover:bg-background-subtle'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col md:flex-row gap-3 w-full">
         {editorMode === 'sketch' ? (
           <>
@@ -319,50 +386,6 @@ export default function FloorPlanEditor({
 
             {/* Sketch canvas */}
             <div className="flex-1 min-w-0">
-              {/* Draft restore banner */}
-              {showDraftRestore && (
-                <div className="mb-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-2">
-                  <span className="text-xs text-amber-700">이전에 저장하지 않은 임시 데이터가 있습니다.</span>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={restoreDraft}
-                      className="text-xs px-3 py-1 bg-amber-100 text-amber-800 rounded-md hover:bg-amber-200 transition-colors"
-                    >
-                      복원
-                    </button>
-                    <button
-                      onClick={dismissDraft}
-                      className="text-xs px-3 py-1 text-amber-600 hover:bg-amber-100 rounded-md transition-colors"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Canvas size selector */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] text-foreground-muted font-semibold">캔버스 비율</span>
-                {[
-                  { label: '정사각형', ratio: 1 },
-                  { label: '가로형', ratio: 0.75 },
-                  { label: '세로형', ratio: 1.33 },
-                  { label: '넓은 가로', ratio: 0.56 },
-                ].map(({ label, ratio }) => (
-                  <button
-                    key={label}
-                    onClick={() => setCanvasRatio(ratio)}
-                    className={`text-[10px] px-2 py-1 rounded-md transition-all ${
-                      canvasRatio === ratio
-                        ? 'bg-accent/15 text-accent ring-1 ring-accent/40'
-                        : 'text-foreground-muted hover:bg-background-subtle'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
               <SketchCanvas
                 strokes={sketch.strokes}
                 currentPoints={sketch.currentPoints}
@@ -410,50 +433,6 @@ export default function FloorPlanEditor({
 
             {/* Canvas */}
             <div className="flex-1 min-w-0">
-              {/* Draft restore banner */}
-              {showDraftRestore && (
-                <div className="mb-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-2">
-                  <span className="text-xs text-amber-700">이전에 저장하지 않은 임시 데이터가 있습니다.</span>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={restoreDraft}
-                      className="text-xs px-3 py-1 bg-amber-100 text-amber-800 rounded-md hover:bg-amber-200 transition-colors"
-                    >
-                      복원
-                    </button>
-                    <button
-                      onClick={dismissDraft}
-                      className="text-xs px-3 py-1 text-amber-600 hover:bg-amber-100 rounded-md transition-colors"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Canvas size selector */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] text-foreground-muted font-semibold">캔버스 비율</span>
-                {[
-                  { label: '정사각형', ratio: 1 },
-                  { label: '가로형', ratio: 0.75 },
-                  { label: '세로형', ratio: 1.33 },
-                  { label: '넓은 가로', ratio: 0.56 },
-                ].map(({ label, ratio }) => (
-                  <button
-                    key={label}
-                    onClick={() => setCanvasRatio(ratio)}
-                    className={`text-[10px] px-2 py-1 rounded-md transition-all ${
-                      canvasRatio === ratio
-                        ? 'bg-accent/15 text-accent ring-1 ring-accent/40'
-                        : 'text-foreground-muted hover:bg-background-subtle'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
               <EditorCanvas
                 shapes={shapes}
                 selectedId={selectedId}
@@ -478,18 +457,25 @@ export default function FloorPlanEditor({
 
               {/* Save button */}
               <div className="mt-3 flex justify-end">
-                <button
-                  onClick={() => onSave(shapes)}
-                  disabled={saving}
-                  className="px-6 py-2.5 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors text-sm font-medium shadow-sm"
-                >
-                  {saving ? '저장 중...' : '배치도 저장'}
-                </button>
+                <Button onClick={() => onSave(shapes, canvasRatio)} loading={saving}>
+                  배치도 저장
+                </Button>
               </div>
             </div>
 
-            {/* Property panel */}
-            <div className="flex-shrink-0 w-full md:w-[200px]">
+            {/* Backdrop for mobile property panel */}
+            {selectedShape && (
+              <div
+                className="fixed inset-0 bg-black/20 z-40 md:hidden"
+                onClick={() => selectShape(null)}
+              />
+            )}
+
+            {/* Property panel — fixed bottom sheet on mobile, sidebar on desktop */}
+            <div className={selectedShape
+              ? 'fixed bottom-0 left-0 right-0 z-50 px-3 pb-4 md:relative md:bottom-auto md:z-auto md:flex-shrink-0 md:w-[200px] md:px-0 md:pb-0'
+              : 'flex-shrink-0 w-full md:w-[200px]'
+            }>
               <PropertyPanel
                 shape={selectedShape}
                 onUpdate={handleUpdateSelected}

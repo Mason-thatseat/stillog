@@ -267,3 +267,9 @@ export function isDragDrawBlock(type: ShapeType): boolean {
   if (!isBlockType(type)) return false;
   return !!BLOCK_REGISTRY[type].dragDraw;
 }
+
+/** 해당 shape이 라벨 입력 필드를 표시해야 하는지 여부 */
+export function hasLabelField(type: ShapeType): boolean {
+  if (isSeatBlock(type)) return true;
+  return type === 'rectangle';
+}

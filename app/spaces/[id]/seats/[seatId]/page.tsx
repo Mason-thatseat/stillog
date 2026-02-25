@@ -31,34 +31,18 @@ export default function SeatDetailPage({
   const fetchData = async () => {
     setLoading(true);
 
-    // Fetch space
-    const { data: spaceData } = await supabase
-      .from('spaces')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const [{ data: spaceData }, { data: seatData }, { data: postsData }] = await Promise.all([
+      supabase.from('spaces').select('*').eq('id', id).single(),
+      supabase.from('seats').select('*').eq('id', seatId).single(),
+      supabase
+        .from('posts')
+        .select('*, profile:profiles(*)')
+        .eq('seat_id', seatId)
+        .order('created_at', { ascending: false }),
+    ]);
 
     setSpace(spaceData);
-
-    // Fetch seat
-    const { data: seatData } = await supabase
-      .from('seats')
-      .select('*')
-      .eq('id', seatId)
-      .single();
-
     setSeat(seatData);
-
-    // Fetch posts
-    const { data: postsData } = await supabase
-      .from('posts')
-      .select(`
-        *,
-        profile:profiles(*)
-      `)
-      .eq('seat_id', seatId)
-      .order('created_at', { ascending: false });
-
     setPosts(postsData || []);
     setLoading(false);
   };

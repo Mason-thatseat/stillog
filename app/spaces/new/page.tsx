@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
@@ -22,7 +22,13 @@ export default function NewSpacePage() {
 
   const router = useRouter();
   const supabase = createClient();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/auth');
+    }
+  }, [authLoading, user, router]);
 
   const handleInfoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +36,7 @@ export default function NewSpacePage() {
     setStep('editor');
   };
 
-  const handleSave = async (shapes: EditorShape[]) => {
+  const handleSave = async (shapes: EditorShape[], canvasRatio: number) => {
     if (!user) {
       router.push('/auth');
       return;
@@ -38,6 +44,8 @@ export default function NewSpacePage() {
 
     setSaving(true);
     setError('');
+
+    let createdSpaceId: string | null = null;
 
     try {
       // 1. Create space (no floor_plan_url)
@@ -51,12 +59,15 @@ export default function NewSpacePage() {
           floor_plan_url: null,
           floor_plan_width: null,
           floor_plan_height: null,
+          canvas_width: 100,
+          canvas_height: Math.round(100 * canvasRatio),
           created_by: user.id,
         })
         .select()
         .single();
 
       if (insertError) throw insertError;
+      createdSpaceId = space.id;
 
       // 2. Save shapes
       if (shapes.length > 0) {
@@ -104,15 +115,28 @@ export default function NewSpacePage() {
         }
       }
 
+      createdSpaceId = null; // 모든 단계 성공, 롤백 불필요
       router.push(`/spaces/${space.id}`);
     } catch (err) {
+      // shapes/seats 저장 실패 시 생성된 space 롤백
+      if (createdSpaceId) {
+        await supabase.from('spaces').delete().eq('id', createdSpaceId);
+      }
       setError(err instanceof Error ? err.message : '오류가 발생했습니다');
     } finally {
       setSaving(false);
     }
   };
 
-  // Auth is checked at save time, not at page load
+  if (authLoading || !user) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="spinner" />
+        </div>
+      </div>
+    );
+  }
 
   if (step === 'info') {
     return (
