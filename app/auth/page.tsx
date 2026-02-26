@@ -111,10 +111,10 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4 bg-background-subtle">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
             {isLogin ? '로그인' : '회원가입'}
           </h1>
           <p className="text-foreground-muted">
@@ -124,7 +124,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-border p-6">
+        <div className="bg-white rounded-2xl border border-border shadow-xl shadow-black/5 p-7">
           {/* Social Login */}
           <div className="space-y-3 mb-6">
             <Button
@@ -155,7 +155,7 @@ export default function AuthPage() {
             </Button>
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full bg-[#FEE500] hover:bg-[#F6DC00] text-[#3C1E1E] border-0 font-semibold"
               onClick={() => handleSocialLogin('kakao')}
               disabled={loading}
             >
@@ -214,7 +214,7 @@ export default function AuthPage() {
               <p className="text-sm text-red-500">{error}</p>
             )}
 
-            <Button type="submit" className="w-full" loading={loading}>
+            <Button type="submit" className="w-full h-11 rounded-xl text-sm font-semibold" loading={loading}>
               {isLogin ? '로그인' : '회원가입'}
             </Button>
           </form>
@@ -224,7 +224,7 @@ export default function AuthPage() {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-accent hover:underline"
+              className="text-accent hover:text-accent/80 transition-colors duration-150"
             >
               {isLogin ? '회원가입' : '로그인'}
             </button>

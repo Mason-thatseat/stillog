@@ -153,11 +153,11 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
   const hasBlockShapes = shapes.length > 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 pt-10 pb-20">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{space.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{space.name}</h1>
           {space.address && (
             <p className="text-foreground-muted mt-1">{space.address}</p>
           )}
@@ -241,8 +241,8 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
           )}
 
           {/* Info */}
-          <div className="bg-white rounded-xl border border-border p-4">
-            <h3 className="font-semibold text-foreground mb-4">공간 정보</h3>
+          <div className="bg-background-subtle rounded-2xl p-4">
+            <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-widest mb-4">공간 정보</h3>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <dt className="text-foreground-muted">총 좌석</dt>
@@ -258,15 +258,15 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
           </div>
 
           {/* Seat List */}
-          <div className="bg-white rounded-xl border border-border p-4">
-            <h3 className="font-semibold text-foreground mb-4">좌석 목록</h3>
+          <div className="bg-background-subtle rounded-2xl p-4">
+            <h3 className="text-xs font-semibold text-foreground-muted uppercase tracking-widest mb-4">좌석 목록</h3>
             {seats.length > 0 ? (
               <ul className="space-y-2">
                 {seats.map((seat) => (
                   <li key={seat.id}>
                     <Link
                       href={`/spaces/${id}/seats/${seat.id}`}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-background-subtle transition-colors"
+                      className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white transition-colors duration-150"
                     >
                       <span className="text-sm font-medium">
                         {seat.label || '이름 없음'}

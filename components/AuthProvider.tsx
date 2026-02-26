@@ -53,13 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (ignore) return;
         setSession(session);
         setUser(session?.user ?? null);
+        if (!ignore) setLoading(false);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          fetchProfile(session.user.id);
         }
       } catch {
-        // ignore
+        if (!ignore) setLoading(false);
       }
-      if (!ignore) setLoading(false);
     };
 
     init();
@@ -69,12 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (ignore) return;
         setSession(session);
         setUser(session?.user ?? null);
+        setLoading(false);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          fetchProfile(session.user.id);
         } else {
           setProfile(null);
         }
-        setLoading(false);
       }
     );
 

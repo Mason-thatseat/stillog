@@ -39,25 +39,25 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="relative hero-gradient noise-overlay overflow-hidden">
         {/* Decorative shapes */}
-        <div className="absolute top-20 left-[10%] w-64 h-64 rounded-full bg-accent/5 blur-3xl animate-float" />
-        <div className="absolute bottom-10 right-[15%] w-48 h-48 rounded-full bg-accent-light/10 blur-3xl animate-float animation-delay-300" />
+        <div className="absolute top-20 left-[10%] w-64 h-64 rounded-full bg-accent/8 blur-[80px] animate-float" />
+        <div className="absolute bottom-10 right-[15%] w-48 h-48 rounded-full bg-accent-light/8 blur-[80px] animate-float animation-delay-300" />
 
-        <div className="relative max-w-6xl mx-auto px-4 py-24 md:py-32">
+        <div className="relative max-w-6xl mx-auto px-4 py-28 md:py-40">
           <div className="text-center max-w-2xl mx-auto">
-            <span className="inline-block text-sm font-medium text-accent bg-accent/10 rounded-full px-4 py-1.5 mb-6 animate-fade-in-up">
+            <span className="inline-block text-xs font-semibold uppercase tracking-wider text-accent bg-accent/10 rounded-full px-4 py-1.5 mb-8 animate-fade-in-up">
               좌석마다 다른 이야기
             </span>
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight tracking-tight animate-fade-in-up animation-delay-150">
+            <h1 className="text-4xl md:text-[64px] font-bold text-foreground mb-6 tracking-[-0.03em] leading-[1.1] animate-fade-in-up animation-delay-150">
               공간의 시선을<br />기록하다
             </h1>
-            <p className="text-lg md:text-xl text-foreground-muted mb-10 leading-relaxed animate-fade-in-up animation-delay-300">
+            <p className="text-base md:text-lg text-foreground-muted mb-10 leading-[1.8] max-w-md mx-auto animate-fade-in-up animation-delay-300">
               카페, 도서관, 공유 오피스.<br className="sm:hidden" />
               좌석마다 다른 풍경을 발견하고,
               나만의 자리를 기록하세요.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in-up animation-delay-500">
               <Link href="/spaces">
-                <Button size="lg" className="w-full sm:w-auto shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/30 transition-shadow">
+                <Button size="lg" className="w-full sm:w-auto shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/35 hover:-translate-y-0.5 transition-all duration-200">
                   공간 탐색하기
                 </Button>
               </Link>
@@ -70,15 +70,15 @@ export default async function HomePage() {
           </div>
 
           {/* Stats */}
-          <div className="flex justify-center gap-12 mt-16 animate-fade-in-up animation-delay-700">
+          <div className="flex justify-center gap-12 mt-20 animate-fade-in-up animation-delay-700">
             <div className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-foreground">{totalSpacesCount ?? 0}</p>
-              <p className="text-sm text-foreground-muted mt-1">등록된 공간</p>
+              <p className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{totalSpacesCount ?? 0}</p>
+              <p className="text-xs uppercase tracking-widest text-foreground-muted mt-1">등록된 공간</p>
             </div>
             <div className="w-px bg-border" />
             <div className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-foreground">{posts?.length || 0}</p>
-              <p className="text-sm text-foreground-muted mt-1">기록된 시선</p>
+              <p className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{posts?.length || 0}</p>
+              <p className="text-xs uppercase tracking-widest text-foreground-muted mt-1">기록된 시선</p>
             </div>
           </div>
         </div>
@@ -174,22 +174,24 @@ export default async function HomePage() {
       </section>
 
       {/* Recent Posts */}
-      <section className="bg-background-subtle border-y border-border">
-        <div className="max-w-6xl mx-auto px-4 py-20">
-          <div className="flex items-end justify-between mb-8">
+      <section className="bg-white border-t border-border">
+        <div className="max-w-6xl mx-auto px-4 pt-20 pb-8">
+          <div className="flex items-end justify-between mb-0">
             <div>
               <h2 className="text-sm font-medium text-accent uppercase tracking-widest mb-2">Posts</h2>
               <p className="text-2xl md:text-3xl font-bold text-foreground">최근 기록</p>
             </div>
           </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-0 md:px-4 pb-20">
           {posts && posts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
               {posts.map((post) => (
                 <PostCard key={post.id} post={post} showSeatInfo />
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-white rounded-2xl border border-border">
+            <div className="text-center py-16 bg-background-subtle rounded-2xl border border-border mx-4">
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/10 flex items-center justify-center">
                 <svg className="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -205,10 +207,10 @@ export default async function HomePage() {
       <section className="relative hero-gradient noise-overlay overflow-hidden">
         <div className="absolute top-10 right-[20%] w-40 h-40 rounded-full bg-accent/5 blur-3xl animate-float" />
         <div className="relative max-w-6xl mx-auto px-4 py-20 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+          <h2 className="text-2xl md:text-4xl font-bold text-foreground tracking-tight mb-4">
             당신만의 시선을 기록해 보세요
           </h2>
-          <p className="text-foreground-muted mb-8 max-w-md mx-auto">
+          <p className="text-foreground-muted mb-10 max-w-sm mx-auto text-sm md:text-base leading-relaxed">
             매일 앉는 그 자리, 누군가에게는 특별한 공간이 될 수 있습니다.
           </p>
           <Link href="/auth">
@@ -221,11 +223,11 @@ export default async function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-border bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-10">
+        <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="text-lg font-semibold text-accent">STILLOG</span>
-              <span className="text-sm text-foreground-muted">공간의 시선을 기록하다</span>
+              <span className="text-base font-bold tracking-tight text-accent">STILLOG</span>
+              <span className="text-xs text-foreground-muted">공간의 시선을 기록하다</span>
             </div>
             <nav className="flex items-center gap-6 text-sm text-foreground-muted">
               <Link href="/spaces" className="hover:text-foreground transition-colors">공간 탐색</Link>
@@ -234,7 +236,7 @@ export default async function HomePage() {
               <Link href="/auth" className="hover:text-foreground transition-colors">로그인</Link>
             </nav>
           </div>
-          <div className="mt-8 pt-6 border-t border-border text-center text-xs text-foreground-muted">
+          <div className="mt-6 pt-5 border-t border-border text-center text-xs text-foreground-muted">
             &copy; 2025 STILLOG. All rights reserved.
           </div>
         </div>

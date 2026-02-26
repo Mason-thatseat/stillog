@@ -98,9 +98,9 @@ a {
 /* Hero gradient mesh */
 .hero-gradient {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(167, 139, 113, 0.15), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(212, 196, 181, 0.12), transparent),
-    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(167, 139, 113, 0.08), transparent);
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(167, 139, 113, 0.28), transparent),
+    radial-gradient(ellipse 70% 50% at 85% 60%, rgba(212, 196, 181, 0.22), transparent),
+    radial-gradient(ellipse 60% 60% at 15% 90%, rgba(167, 139, 113, 0.16), transparent);
 }
 
 /* Subtle noise texture overlay */
@@ -108,9 +108,35 @@ a {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.03;
+  opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   pointer-events: none;
+}
+
+/* Mobile tab bar */
+.mobile-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--color-border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Post card overlay */
+.post-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.0) 55%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.group:hover .post-card-overlay {
+  opacity: 1;
 }
 
 /* Custom scrollbar */

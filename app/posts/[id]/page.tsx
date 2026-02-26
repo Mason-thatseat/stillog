@@ -85,7 +85,7 @@ export default function PostDetailPage({
   const isOwner = user?.id === post.user_id;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 pt-6 pb-24">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-foreground-muted mb-6">
         <Link href="/spaces" className="hover:text-foreground">공간</Link>
@@ -110,7 +110,7 @@ export default function PostDetailPage({
       </nav>
 
       {/* Image */}
-      <div className="aspect-[4/3] relative rounded-2xl overflow-hidden bg-background-subtle mb-6 border border-border">
+      <div className="aspect-square relative rounded-2xl overflow-hidden bg-background-subtle mb-5">
         <Image
           src={post.image_url}
           alt={post.content ? post.content.substring(0, 50) : `${space?.name || ''} 좌석에서 본 풍경`}
@@ -129,23 +129,23 @@ export default function PostDetailPage({
       </div>
 
       {/* Author & meta */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5 py-3 border-b border-border/50">
         <div className="flex items-center gap-3">
           {post.profile?.profile_image ? (
             <Image
               src={post.profile.profile_image}
               alt={post.profile.nickname}
-              width={36}
-              height={36}
-              className="w-9 h-9 rounded-full object-cover ring-1 ring-border"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-full object-cover ring-1 ring-border"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-sm font-medium text-accent">
+            <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-sm font-medium text-accent">
               {post.profile?.nickname?.[0] || 'U'}
             </div>
           )}
           <div>
-            <p className="text-sm font-medium text-foreground">{post.profile?.nickname}</p>
+            <p className="text-sm font-semibold text-foreground">{post.profile?.nickname}</p>
             <time className="text-xs text-foreground-muted">{formatDateTime(post.created_at)}</time>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function PostDetailPage({
 
       {/* Content */}
       {post.content && (
-        <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+        <p className="text-foreground text-sm md:text-base leading-[1.8] whitespace-pre-wrap">
           {post.content}
         </p>
       )}

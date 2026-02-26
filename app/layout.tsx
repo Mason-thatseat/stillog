@@ -36,7 +36,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background">
         <AuthProvider>
           <Header />
-          <main>{children}</main>
+          <main className="pb-16 md:pb-0">{children}</main>
         </AuthProvider>
       </body>
     </html>

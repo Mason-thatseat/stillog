@@ -31,10 +31,10 @@ export default function PostCard({ post, showSeatInfo = false }: PostCardProps) 
   const formattedDate = formatDate(post.created_at);
 
   return (
-    <article className="group bg-white rounded-2xl border border-border overflow-hidden hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300 relative">
+    <article className="group bg-white rounded-xl overflow-hidden transition-all duration-300 cursor-pointer relative">
       {/* Stretched link covers the whole card; inner links sit above it via relative z-10 */}
-      <Link href={`/posts/${post.id}`} className="absolute inset-0 z-0" aria-label="포스트 상세 보기" />
-      <div className="aspect-[4/3] relative bg-background-subtle overflow-hidden">
+      <Link href={`/posts/${post.id}`} className="absolute inset-0 z-10" aria-label="포스트 상세 보기" />
+      <div className="aspect-square relative bg-background-subtle overflow-hidden">
         <Image
           src={post.image_url}
           alt={post.content ? post.content.substring(0, 50) : '좌석에서 본 풍경'}
@@ -49,47 +49,22 @@ export default function PostCard({ post, showSeatInfo = false }: PostCardProps) 
             <span className="text-xs font-medium text-foreground">{post.rating}</span>
           </div>
         )}
-      </div>
-      <div className="p-4">
-        {showSeatInfo && post.seat?.space && (
-          <Link
-            href={`/spaces/${post.seat.space.id}`}
-            className="relative z-10 inline-flex items-center gap-1 text-xs text-accent hover:text-accent/80 font-medium mb-2 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {post.seat.space.name} · {post.seat.label || '좌석'}
-          </Link>
-        )}
-
-        {post.content && (
-          <p className="text-sm text-foreground leading-relaxed line-clamp-2">
-            {post.content}
-          </p>
-        )}
-
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
-          <div className="flex items-center gap-2">
-            {post.profile?.profile_image ? (
-              <Image
-                src={post.profile.profile_image}
-                alt={post.profile.nickname}
-                width={24}
-                height={24}
-                className="w-6 h-6 rounded-full object-cover ring-1 ring-border"
-              />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-xs font-medium text-accent">
-                {post.profile?.nickname?.[0] || 'U'}
-              </div>
+        {/* Instagram-style hover overlay */}
+        <div className="post-card-overlay pointer-events-none">
+          <div className="absolute bottom-0 left-0 right-0 p-3 pointer-events-none">
+            {showSeatInfo && post.seat?.space && (
+              <p className="text-[11px] text-white/80 font-medium mb-0.5 truncate">
+                {post.seat.space.name} · {post.seat.label || '좌석'}
+              </p>
             )}
-            <span className="text-xs text-foreground-muted font-medium">
-              {post.profile?.nickname}
-            </span>
+            {post.content && (
+              <p className="text-xs text-white leading-snug line-clamp-2">{post.content}</p>
+            )}
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-[11px] text-white/70 font-medium">{post.profile?.nickname}</span>
+              <time className="text-[11px] text-white/60">{formattedDate}</time>
+            </div>
           </div>
-          <time className="text-xs text-foreground-muted">{formattedDate}</time>
         </div>
       </div>
     </article>

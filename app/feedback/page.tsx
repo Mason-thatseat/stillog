@@ -68,10 +68,10 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 pt-10 pb-24">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground mb-2">의견 게시판</h1>
-        <p className="text-foreground-muted">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">의견 게시판</h1>
+        <p className="text-foreground-muted text-sm leading-relaxed">
           STILLOG에 대한 의견, 건의사항, 피드백을 자유롭게 남겨주세요.
         </p>
       </div>
@@ -85,7 +85,7 @@ export default function FeedbackPage() {
             placeholder="의견을 작성해 주세요..."
             rows={3}
             maxLength={500}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-white text-foreground placeholder:text-foreground-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 resize-none text-sm"
+            className="w-full px-4 py-3 rounded-2xl border border-border bg-white text-foreground placeholder:text-foreground-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/25 resize-none text-sm"
           />
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-foreground-muted">{content.length}/500</span>
@@ -122,7 +122,7 @@ export default function FeedbackPage() {
           {feedbacks.map((fb) => (
             <div
               key={fb.id}
-              className="p-4 rounded-xl bg-white border border-border"
+              className="p-4 rounded-2xl bg-white border border-border/70 hover:border-border transition-colors duration-150"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -130,16 +130,16 @@ export default function FeedbackPage() {
                     <Image
                       src={fb.profile.profile_image}
                       alt={fb.profile.nickname}
-                      width={24}
-                      height={24}
-                      className="w-6 h-6 rounded-full object-cover ring-1 ring-border"
+                      width={28}
+                      height={28}
+                      className="w-7 h-7 rounded-full object-cover ring-1 ring-border"
                     />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-medium text-accent">
+                    <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-medium text-accent">
                       {fb.profile?.nickname?.[0] || '?'}
                     </div>
                   )}
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-sm font-semibold text-foreground">
                     {fb.profile?.nickname || '익명'}
                   </span>
                   <span className="text-xs text-foreground-muted">
@@ -173,7 +173,7 @@ export default function FeedbackPage() {
                   )
                 )}
               </div>
-              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-[1.75]">
                 {fb.content}
               </p>
             </div>

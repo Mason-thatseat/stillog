@@ -67,9 +67,9 @@ export default function SeatDetailPage({
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 pt-8 pb-20">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-foreground-muted mb-6">
+      <nav className="flex items-center gap-2 text-xs text-foreground-muted mb-8">
         <Link href="/spaces" className="hover:text-foreground">
           공간
         </Link>
@@ -84,7 +84,7 @@ export default function SeatDetailPage({
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
             {seat.label || '좌석'}
           </h1>
           <p className="text-foreground-muted mt-1">
@@ -100,7 +100,7 @@ export default function SeatDetailPage({
 
       {/* Posts Grid */}
       {posts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}

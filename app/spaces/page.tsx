@@ -19,11 +19,11 @@ export default async function SpacesPage() {
   const spacesWithCounts = transformSpacesWithCounts(spaces);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-6xl mx-auto px-4 pt-12 pb-20">
+      <div className="flex items-start justify-between mb-10">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">공간 탐색</h1>
-          <p className="text-foreground-muted mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">공간 탐색</h1>
+          <p className="text-sm text-foreground-muted mt-1.5">
             다양한 공간의 좌석별 풍경을 탐색해보세요
           </p>
         </div>
@@ -33,7 +33,7 @@ export default async function SpacesPage() {
       </div>
 
       {spacesWithCounts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {spacesWithCounts.map((space) => (
             <SpaceCard key={space.id} space={space} />
           ))}

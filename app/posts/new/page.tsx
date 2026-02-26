@@ -154,7 +154,7 @@ function NewPostForm() {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8">
+    <div className="max-w-xl mx-auto px-4 pt-8 pb-24">
       {/* Breadcrumb */}
       {space && seat && (
         <nav className="flex items-center gap-2 text-sm text-foreground-muted mb-6">
@@ -170,8 +170,8 @@ function NewPostForm() {
         </nav>
       )}
 
-      <h1 className="text-2xl font-bold text-foreground mb-2">포스트 작성</h1>
-      <p className="text-foreground-muted mb-8">
+      <h1 className="text-xl tracking-tight font-bold text-foreground mb-2">포스트 작성</h1>
+      <p className="text-sm text-foreground-muted mb-8">
         이 좌석에서 본 풍경을 공유해주세요
       </p>
 
@@ -190,8 +190,8 @@ function NewPostForm() {
           />
 
           {imagePreview ? (
-            <div className="relative rounded-lg border border-border overflow-hidden">
-              <div className="aspect-[4/3] relative bg-background-subtle">
+            <div className="relative rounded-2xl border border-border overflow-hidden">
+              <div className="aspect-square relative bg-background-subtle">
                 <Image
                   src={imagePreview}
                   alt="미리보기"
@@ -217,7 +217,7 @@ function NewPostForm() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full aspect-[4/3] border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center hover:border-accent transition-colors"
+              className="w-full aspect-square border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center hover:border-accent/60 hover:bg-accent/[0.02] transition-colors"
             >
               <svg className="w-12 h-12 text-foreground-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -235,7 +235,7 @@ function NewPostForm() {
 
         {/* Rating */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-foreground mb-1.5">
             별점 (선택)
           </label>
           <div className="flex gap-1">
@@ -246,7 +246,7 @@ function NewPostForm() {
                 onClick={() => setRating(rating === star ? 0 : star)}
                 onMouseEnter={() => setHoverRating(star)}
                 onMouseLeave={() => setHoverRating(0)}
-                className="p-1"
+                className="p-1 hover:scale-110 active:scale-95 transition-transform duration-150"
               >
                 <svg
                   className={`w-8 h-8 transition-colors ${
@@ -266,7 +266,7 @@ function NewPostForm() {
 
         {/* Content */}
         <div>
-          <label htmlFor="content" className="block text-sm font-medium text-foreground mb-1.5">
+          <label htmlFor="content" className="block text-xs font-semibold uppercase tracking-wider text-foreground mb-1.5">
             후기 (선택)
           </label>
           <textarea
@@ -275,7 +275,7 @@ function NewPostForm() {
             onChange={(e) => setContent(e.target.value)}
             placeholder="이 자리에서의 경험을 공유해주세요..."
             rows={4}
-            className="w-full px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-border bg-white text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 resize-none"
           />
         </div>
 

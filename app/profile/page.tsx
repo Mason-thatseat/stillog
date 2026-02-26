@@ -55,42 +55,44 @@ export default function ProfilePage() {
 
     setContentLoading(true);
 
-    const [postsResult, spacesResult, feedbackResult] = await Promise.all([
-      supabase
-        .from('posts')
-        .select(`
-          *,
-          profile:profiles(*),
-          seat:seats(
+    try {
+      const [postsResult, spacesResult, feedbackResult] = await Promise.all([
+        supabase
+          .from('posts')
+          .select(`
             *,
-            space:spaces(*)
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
+            profile:profiles(*),
+            seat:seats(
+              *,
+              space:spaces(*)
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
 
-      supabase
-        .from('spaces')
-        .select(`
-          *,
-          seats:seats(count),
-          posts:seats(posts(count))
-        `)
-        .eq('created_by', user.id)
-        .order('created_at', { ascending: false }),
+        supabase
+          .from('spaces')
+          .select(`
+            *,
+            seats:seats(count),
+            posts:seats(posts(count))
+          `)
+          .eq('created_by', user.id)
+          .order('created_at', { ascending: false }),
 
-      supabase
-        .from('feedback')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
-    ]);
+        supabase
+          .from('feedback')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+      ]);
 
-    setPosts(postsResult.data || []);
-
-    setSpaces(transformSpacesWithCounts(spacesResult.data));
-    setFeedbacks(feedbackResult.data || []);
-    setContentLoading(false);
+      setPosts(postsResult.data || []);
+      setSpaces(transformSpacesWithCounts(spacesResult.data));
+      setFeedbacks(feedbackResult.data || []);
+    } finally {
+      setContentLoading(false);
+    }
   };
 
   const handleUpdateProfile = async () => {
@@ -252,26 +254,26 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Profile Header — 간소화 */}
-      <div className="bg-white rounded-xl border border-border p-6 mb-8">
-        <div className="flex items-center gap-4">
+    <div className="max-w-4xl mx-auto px-4 pt-0 pb-24">
+      {/* Profile Header — 전체 너비 배너 */}
+      <div className="bg-background-subtle border-b border-border px-4 pt-10 pb-8 mb-0 -mx-4">
+        <div className="max-w-4xl mx-auto flex items-center gap-6">
           {profile?.profile_image ? (
             <Image
               src={profile.profile_image}
               alt={displayName}
-              width={64}
-              height={64}
-              className="w-16 h-16 rounded-full object-cover"
+              width={96}
+              height={96}
+              className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover ring-4 ring-white"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-accent-light flex items-center justify-center text-xl font-semibold text-accent">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-accent-light flex items-center justify-center text-xl font-semibold text-accent ring-4 ring-white">
               {displayInitial}
             </div>
           )}
           <div>
-            <h1 className="text-lg font-bold text-foreground">{displayName}</h1>
-            <p className="text-foreground-muted text-sm">{displayEmail}</p>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">{displayName}</h1>
+            <p className="text-foreground-muted text-sm mt-0.5">{displayEmail}</p>
           </div>
         </div>
       </div>
@@ -282,10 +284,10 @@ export default function ProfilePage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            className={`px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === tab.key
                 ? 'border-accent text-accent'
-                : 'border-transparent text-foreground-muted hover:text-foreground'
+                : 'border-transparent text-foreground-muted hover:text-foreground hover:border-border'
             }`}
           >
             {tab.label}
@@ -309,7 +311,7 @@ export default function ProfilePage() {
                   포스트 <span className="text-foreground-muted font-normal text-sm">({posts.length})</span>
                 </h2>
                 {posts.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
                     {posts.map((post) => (
                       <PostCard key={post.id} post={post} showSeatInfo />
                     ))}
@@ -330,7 +332,7 @@ export default function ProfilePage() {
                   등록한 공간 <span className="text-foreground-muted font-normal text-sm">({spaces.length})</span>
                 </h2>
                 {spaces.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {spaces.map((space) => (
                       <SpaceCard key={space.id} space={space} />
                     ))}
@@ -352,22 +354,22 @@ export default function ProfilePage() {
             <div className="space-y-8">
               {/* 요약 통계 카드 */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl border border-border p-4 text-center">
-                  <p className="text-2xl font-bold text-foreground">{posts.length}</p>
+                <div className="bg-background-subtle rounded-2xl p-5 text-center">
+                  <p className="text-2xl font-bold tabular-nums text-foreground">{posts.length}</p>
                   <p className="text-xs text-foreground-muted mt-1">총 포스트</p>
                 </div>
-                <div className="bg-white rounded-xl border border-border p-4 text-center">
-                  <p className="text-2xl font-bold text-foreground">
+                <div className="bg-background-subtle rounded-2xl p-5 text-center">
+                  <p className="text-2xl font-bold tabular-nums text-foreground">
                     {avgRating > 0 ? avgRating.toFixed(1) : '-'}
                   </p>
                   <p className="text-xs text-foreground-muted mt-1">평균 평점</p>
                 </div>
-                <div className="bg-white rounded-xl border border-border p-4 text-center">
-                  <p className="text-2xl font-bold text-foreground">{spaces.length}</p>
+                <div className="bg-background-subtle rounded-2xl p-5 text-center">
+                  <p className="text-2xl font-bold tabular-nums text-foreground">{spaces.length}</p>
                   <p className="text-xs text-foreground-muted mt-1">등록 공간</p>
                 </div>
-                <div className="bg-white rounded-xl border border-border p-4 text-center">
-                  <p className="text-2xl font-bold text-foreground">{feedbacks.length}</p>
+                <div className="bg-background-subtle rounded-2xl p-5 text-center">
+                  <p className="text-2xl font-bold tabular-nums text-foreground">{feedbacks.length}</p>
                   <p className="text-xs text-foreground-muted mt-1">피드백</p>
                 </div>
               </div>
@@ -380,7 +382,7 @@ export default function ProfilePage() {
                     {timeline.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-start gap-3 bg-white rounded-lg border border-border p-4"
+                        className="flex items-start gap-3 bg-white rounded-2xl border border-border/50 p-4 hover:border-border transition-colors duration-150"
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${timelineTypeColor(item.type)}`}>
                           {timelineTypeIcon(item.type)}
