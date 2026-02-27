@@ -35,6 +35,7 @@ export interface FloorPlanShape {
   opacity: number;
   z_index: number;
   label: string | null;
+  zone_id?: string | null;
   created_at: string;
 }
 
@@ -57,6 +58,7 @@ export interface Space {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
+  place_id: string | null;
   floor_plan_url: string | null;
   floor_plan_width: number | null;
   floor_plan_height: number | null;

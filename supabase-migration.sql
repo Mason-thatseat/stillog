@@ -38,3 +38,15 @@ CREATE POLICY "Users can delete own feedback"
   ON feedback FOR DELETE USING (auth.uid() = user_id);
 
 CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at DESC);
+
+-- ============================================
+-- 매장 중복 검증 + SeatEditor 마이그레이션
+-- 2026-02-27
+-- ============================================
+
+-- 1. spaces 테이블에 place_id 컬럼 추가 (카카오 place_id 기반 중복 검증용)
+ALTER TABLE spaces ADD COLUMN IF NOT EXISTS place_id TEXT;
+CREATE INDEX IF NOT EXISTS idx_spaces_place_id ON spaces(place_id);
+
+-- 2. spaces 테이블에 room_polygon 컬럼 추가 (SeatEditor 외곽선 저장용)
+ALTER TABLE spaces ADD COLUMN IF NOT EXISTS room_polygon JSONB;

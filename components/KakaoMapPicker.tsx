@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 interface KakaoMapPickerProps {
   latitude?: number;
   longitude?: number;
-  onLocationChange: (lat: number, lng: number, address: string) => void;
+  onLocationChange: (lat: number, lng: number, address: string, placeId?: string) => void;
 }
 
 declare global {
@@ -230,9 +230,10 @@ export default function KakaoMapPicker({
                 data[0].road_address_name ||
                 data[0].address_name ||
                 data[0].place_name;
+              const placeId: string | undefined = data[0].id || undefined;
 
               placeMarker(lat, lng);
-              onLocationChangeRef.current(lat, lng, addr);
+              onLocationChangeRef.current(lat, lng, addr, placeId);
               mapInstance.current?.setLevel(3);
             } else {
               setMapError('주소를 찾을 수 없습니다. 다시 시도해주세요.');

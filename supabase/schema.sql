@@ -52,11 +52,13 @@ CREATE TABLE spaces (
   address TEXT,
   latitude DECIMAL,
   longitude DECIMAL,
+  place_id TEXT,
   floor_plan_url TEXT,
   floor_plan_width INT,
   floor_plan_height INT,
   canvas_width INT DEFAULT 100,
   canvas_height INT DEFAULT 100,
+  room_polygon JSONB,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -199,6 +201,7 @@ CREATE INDEX idx_posts_seat_id ON posts(seat_id);
 CREATE INDEX idx_posts_user_id ON posts(user_id);
 CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
 CREATE INDEX idx_spaces_created_at ON spaces(created_at DESC);
+CREATE INDEX idx_spaces_place_id ON spaces(place_id);
 
 -- Storage buckets (create these in Supabase Dashboard > Storage)
 -- 1. floor-plans (public)

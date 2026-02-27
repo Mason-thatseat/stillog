@@ -7,15 +7,21 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import FloorPlanCanvas from '@/components/FloorPlanCanvas';
 import BlockFloorPlanViewer from '@/components/BlockFloorPlanViewer';
+import WizardFloorPlanViewer from '@/components/floor-wizard/WizardFloorPlanViewer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Space, Seat, FloorPlanShape } from '@/lib/types';
+import type { WizardZone, WizardFixture, WizardSeatUnit, WizardWalls } from '@/lib/floor-wizard/types';
 
 export default function SpaceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [space, setSpace] = useState<Space | null>(null);
   const [seats, setSeats] = useState<Seat[]>([]);
   const [shapes, setShapes] = useState<FloorPlanShape[]>([]);
+  const [wizardZones, setWizardZones] = useState<WizardZone[]>([]);
+  const [wizardFixtures, setWizardFixtures] = useState<WizardFixture[]>([]);
+  const [wizardSeatUnits, setWizardSeatUnits] = useState<WizardSeatUnit[]>([]);
+  const [wizardWalls, setWizardWalls] = useState<WizardWalls>({ shape: 'rectangle', points: [] });
   const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [newSeatLabel, setNewSeatLabel] = useState('');
@@ -37,10 +43,14 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
         { data: spaceData },
         { data: seatsData },
         { data: shapesData },
+        { data: zonesData },
+        { data: fixturesData },
       ] = await Promise.all([
         supabase.from('spaces').select('*').eq('id', id).single(),
         supabase.from('seats').select('*, posts:posts(count)').eq('space_id', id),
         supabase.from('floor_plan_shapes').select('*').eq('space_id', id).order('z_index', { ascending: true }),
+        supabase.from('wizard_zones').select('*').eq('space_id', id),
+        supabase.from('wizard_fixtures').select('*').eq('space_id', id),
       ]);
 
       if (cancelled) return;
@@ -54,6 +64,72 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
           })) || []
         );
         setShapes(shapesData || []);
+
+        // wizard zones
+        const zones: WizardZone[] = (zonesData ?? []).map((z: Record<string, unknown>) => ({
+          id: z.id as string,
+          type: z.type as WizardZone['type'],
+          label: z.label as string,
+          color: z.color as string,
+          x: z.x_percent as number,
+          y: z.y_percent as number,
+          width: z.width_percent as number,
+          height: z.height_percent as number,
+        }));
+        setWizardZones(zones);
+
+        // wizard fixtures
+        const fixtures: WizardFixture[] = (fixturesData ?? []).map((f: Record<string, unknown>) => ({
+          id: f.id as string,
+          type: f.type as WizardFixture['type'],
+          x: f.x_percent as number,
+          y: f.y_percent as number,
+          width: f.width_percent as number,
+          height: f.height_percent as number,
+        }));
+        setWizardFixtures(fixtures);
+
+        // walls from room_polygon
+        const storedPolygon = (spaceData as Record<string, unknown>).room_polygon as {
+          shape?: string; points?: { x: number; y: number }[]
+        } | null | undefined;
+        const walls: WizardWalls = storedPolygon
+          ? { shape: (storedPolygon.shape as WizardWalls['shape']) ?? 'custom', points: storedPolygon.points ?? [] }
+          : { shape: 'rectangle', points: [] };
+        setWizardWalls(walls);
+
+        // seat units from floor_plan_shapes (block_table_*)
+        const SEAT_UNIT_CAPACITY: Record<string, number> = {
+          TABLE_1: 1,
+          TABLE_2: 2,
+          TABLE_4: 4,
+          TABLE_6: 6,
+          BAR: 4,
+        };
+        const shapeTypeToSeatUnitType = (shapeType: string): WizardSeatUnit['type'] => {
+          const suffix = shapeType.replace(/^block_table_/, '').toUpperCase();
+          const validTypes: WizardSeatUnit['type'][] = ['TABLE_1', 'TABLE_2', 'TABLE_4', 'TABLE_6', 'BAR'];
+          return validTypes.includes(suffix as WizardSeatUnit['type'])
+            ? (suffix as WizardSeatUnit['type'])
+            : 'TABLE_4';
+        };
+        const seatUnits: WizardSeatUnit[] = (shapesData ?? [])
+          .filter((s: Record<string, unknown>) => String(s.shape_type).startsWith('block_table'))
+          .map((s: Record<string, unknown>, i: number) => {
+            const unitType = shapeTypeToSeatUnitType(String(s.shape_type));
+            return {
+              id: s.id as string,
+              zoneId: (s.zone_id as string | null) ?? null,
+              type: unitType,
+              label: (s.label as string) ?? String(i + 1),
+              capacity: SEAT_UNIT_CAPACITY[unitType] ?? 4,
+              x: s.x_percent as number,
+              y: s.y_percent as number,
+              width: s.width_percent as number,
+              height: s.height_percent as number,
+            };
+          });
+        setWizardSeatUnits(seatUnits);
       }
 
       setLoading(false);
@@ -151,6 +227,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
 
   const hasFloorPlanImage = !!space.floor_plan_url;
   const hasBlockShapes = shapes.length > 0;
+  const hasWizardData = wizardZones.length > 0 || wizardFixtures.length > 0 || wizardSeatUnits.length > 0;
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-10 pb-20">
@@ -171,7 +248,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
               배치도 수정
             </Button>
           )}
-          {isOwner && (hasFloorPlanImage || hasBlockShapes) && (
+          {isOwner && (hasFloorPlanImage || hasBlockShapes || hasWizardData) && (
             <Button
               variant={isEditing ? 'primary' : 'outline'}
               onClick={() => setIsEditing(!isEditing)}
@@ -185,7 +262,21 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Floor Plan */}
         <div className="lg:col-span-2">
-          {hasBlockShapes ? (
+          {hasWizardData ? (
+            <WizardFloorPlanViewer
+              walls={wizardWalls}
+              zones={wizardZones}
+              fixtures={wizardFixtures}
+              seatUnits={wizardSeatUnits}
+              canvasRatio={(space.canvas_height ?? 100) / 100}
+              onSeatUnitClick={(unitId) => {
+                const seat = seats.find((s) => s.shape_id === unitId);
+                if (seat) {
+                  router.push(`/spaces/${id}/seats/${seat.id}`);
+                }
+              }}
+            />
+          ) : hasBlockShapes ? (
             <BlockFloorPlanViewer
               shapes={shapes}
               seats={seats}
