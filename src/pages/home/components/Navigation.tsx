@@ -37,8 +37,8 @@ export default function Navigation({ scrolled }: NavigationProps) {
   const openLogin = () => { setSignupOpen(false); setLoginOpen(true); };
   const openSignup = () => { setLoginOpen(false); setSignupOpen(true); };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setMenuOpen(false);
   };
 
