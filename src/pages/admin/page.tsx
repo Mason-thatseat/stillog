@@ -4,6 +4,7 @@ import { useAuthStore } from '../../store/authStore';
 import { supabase } from '../../lib/supabase';
 import SpaceApprovalTab from './components/SpaceApprovalTab';
 import ReportedReviewsTab from './components/ReportedReviewsTab';
+import UsersManagementTab from './components/UsersManagementTab';
 
 type TabType = 'dashboard' | 'spaces' | 'reports' | 'users' | 'stats';
 
@@ -124,7 +125,7 @@ export default function AdminPage() {
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-xl font-bold text-gray-900">관리자 대시보드</h1>
-          <p className="text-sm text-gray-500 mt-1">{user.name}</p>
+          <p className="text-sm text-gray-500 mt-1">{user.nickname}</p>
         </div>
 
         <nav className="flex-1 p-4">
@@ -304,10 +305,7 @@ export default function AdminPage() {
         {activeTab === 'users' && (
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">회원 관리</h2>
-            <div className="bg-white rounded-xl p-12 border border-gray-200 text-center">
-              <i className="ri-user-line text-5xl text-gray-300 mb-4"></i>
-              <p className="text-gray-500">회원 관리 기능은 준비중입니다</p>
-            </div>
+            <UsersManagementTab />
           </div>
         )}
 
