@@ -84,6 +84,36 @@ export const useAuthStore = create<AuthState>()(
                   },
                   isAuthenticated: true,
                 });
+              } else {
+                // OAuth 첫 로그인 시 프로필 자동 생성
+                const supabaseUser = session.user;
+                const nickname =
+                  supabaseUser.user_metadata?.full_name ||
+                  supabaseUser.user_metadata?.name ||
+                  supabaseUser.email?.split('@')[0] ||
+                  `사용자${Math.floor(Math.random() * 10000)}`;
+                const profileImage =
+                  supabaseUser.user_metadata?.avatar_url ||
+                  supabaseUser.user_metadata?.picture ||
+                  undefined;
+
+                await supabase.from('profiles').insert({
+                  id: supabaseUser.id,
+                  email: supabaseUser.email || '',
+                  nickname,
+                  profile_image: profileImage || null,
+                });
+
+                set({
+                  user: {
+                    id: supabaseUser.id,
+                    email: supabaseUser.email || '',
+                    nickname,
+                    profileImage,
+                    role: 'user',
+                  },
+                  isAuthenticated: true,
+                });
               }
             } else if (event === 'SIGNED_OUT') {
               set({ user: null, isAuthenticated: false });

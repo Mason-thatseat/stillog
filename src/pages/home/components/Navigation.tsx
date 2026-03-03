@@ -81,13 +81,13 @@ export default function Navigation({ scrolled }: NavigationProps) {
                     className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 hover:border-gray-400 transition-all cursor-pointer whitespace-nowrap"
                   >
                     <div className="w-6 h-6 flex items-center justify-center rounded-full overflow-hidden bg-gray-100">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      {user.profileImage ? (
+                        <img src={user.profileImage} alt={user.nickname} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xs font-bold text-gray-600">{user.name.charAt(0)}</span>
+                        <span className="text-xs font-bold text-gray-600">{user.nickname.charAt(0)}</span>
                       )}
                     </div>
-                    <span className="text-sm font-medium text-gray-800">{user.name}</span>
+                    <span className="text-sm font-medium text-gray-800">{user.nickname}</span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                       {getRoleName(user.role)}
                     </span>
@@ -153,14 +153,14 @@ export default function Navigation({ scrolled }: NavigationProps) {
                   className="flex items-center gap-3 text-base font-medium text-gray-700 hover:text-gray-900 cursor-pointer text-left"
                 >
                   <div className="w-8 h-8 flex items-center justify-center rounded-full overflow-hidden bg-gray-100">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                    {user.profileImage ? (
+                      <img src={user.profileImage} alt={user.nickname} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-sm font-bold text-gray-600">{user.name.charAt(0)}</span>
+                      <span className="text-sm font-bold text-gray-600">{user.nickname.charAt(0)}</span>
                     )}
                   </div>
                   <div>
-                    <div className="text-sm font-medium">{user.name}</div>
+                    <div className="text-sm font-medium">{user.nickname}</div>
                     <div className={`text-xs ${getRoleBadgeColor(user.role).split(' ')[1]}`}>
                       {getRoleName(user.role)}
                     </div>
