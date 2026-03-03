@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 type Role = 'user' | 'owner' | 'admin';
@@ -23,6 +23,17 @@ interface EditForm {
 
 const ROLE_LABELS: Record<Role, string> = { user: '일반회원', owner: '오너', admin: '관리자' };
 const GENDER_LABELS: Record<Gender, string> = { male: '남성', female: '여성', other: '기타' };
+const CURRENT_YEAR = new Date().getFullYear();
+
+const FILTER_BUTTONS: { id: 'all' | Role; label: string }[] = [
+  { id: 'all', label: '전체' },
+  { id: 'user', label: '일반회원' },
+  { id: 'owner', label: '오너' },
+  { id: 'admin', label: '관리자' },
+];
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
 
 const roleBadge = (role: Role | null) => {
   if (!role) return <span className="text-xs text-gray-400">-</span>;
@@ -49,11 +60,19 @@ export default function UsersManagementTab() {
   const [form, setForm] = useState<EditForm>({ birth_year: '', gender: '', role: 'user' });
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showToast = (type: 'success' | 'error', message: string) => {
+  const showToast = useCallback((type: 'success' | 'error', message: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -70,7 +89,7 @@ export default function UsersManagementTab() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     fetchUsers();
@@ -114,25 +133,18 @@ export default function UsersManagementTab() {
     }
   };
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-
-  const filtered = users.filter(u => {
-    const matchRole = roleFilter === 'all' || u.role === roleFilter;
-    const q = searchQuery.toLowerCase();
-    const matchSearch =
-      !q ||
-      (u.nickname ?? '').toLowerCase().includes(q) ||
-      (u.email ?? '').toLowerCase().includes(q);
-    return matchRole && matchSearch;
-  });
-
-  const filterButtons: { id: RoleFilter; label: string }[] = [
-    { id: 'all', label: '전체' },
-    { id: 'user', label: '일반회원' },
-    { id: 'owner', label: '오너' },
-    { id: 'admin', label: '관리자' },
-  ];
+  const filtered = useMemo(() =>
+    users.filter(u => {
+      const matchRole = roleFilter === 'all' || u.role === roleFilter;
+      const q = searchQuery.toLowerCase();
+      const matchSearch =
+        !q ||
+        (u.nickname ?? '').toLowerCase().includes(q) ||
+        (u.email ?? '').toLowerCase().includes(q);
+      return matchRole && matchSearch;
+    }),
+    [users, searchQuery, roleFilter]
+  );
 
   return (
     <div>
@@ -151,7 +163,7 @@ export default function UsersManagementTab() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">총 <strong className="text-gray-900">{users.length}</strong>명</span>
           <div className="flex gap-1 ml-2">
-            {filterButtons.map(btn => (
+            {FILTER_BUTTONS.map(btn => (
               <button
                 key={btn.id}
                 onClick={() => setRoleFilter(btn.id)}
@@ -279,7 +291,7 @@ export default function UsersManagementTab() {
                     onChange={e => setForm(f => ({ ...f, birth_year: e.target.value }))}
                     placeholder="예: 1995"
                     min={1900}
-                    max={new Date().getFullYear()}
+                    max={CURRENT_YEAR}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                   />
                 </div>
@@ -292,9 +304,9 @@ export default function UsersManagementTab() {
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white cursor-pointer"
                   >
                     <option value="">선택 안 함</option>
-                    <option value="male">남성</option>
-                    <option value="female">여성</option>
-                    <option value="other">기타</option>
+                    {(Object.entries(GENDER_LABELS) as [Gender, string][]).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -305,9 +317,9 @@ export default function UsersManagementTab() {
                     onChange={e => setForm(f => ({ ...f, role: e.target.value as Role }))}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white cursor-pointer"
                   >
-                    <option value="user">일반회원</option>
-                    <option value="owner">오너</option>
-                    <option value="admin">관리자</option>
+                    {(Object.entries(ROLE_LABELS) as [Role, string][]).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
