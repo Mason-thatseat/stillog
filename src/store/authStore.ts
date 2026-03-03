@@ -41,7 +41,7 @@ async function resolveUserFromSession(session: Session): Promise<User> {
       email: profile.email || supabaseUser.email || '',
       nickname: profile.nickname,
       profileImage: profile.profile_image || undefined,
-      role: 'user',
+      role: (profile.role as UserRole) || 'user',
     };
   }
 
