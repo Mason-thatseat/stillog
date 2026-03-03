@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
 export type UserRole = 'user' | 'owner' | 'admin';
 
@@ -25,204 +25,125 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void;
 }
 
+// 세션으로부터 유저 정보 세팅 (프로필 조회 → 없으면 upsert → 항상 로그인 처리)
+async function resolveUserFromSession(session: Session): Promise<User> {
+  const supabaseUser = session.user;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', supabaseUser.id)
+    .maybeSingle();
+
+  if (profile) {
+    return {
+      id: profile.id,
+      email: profile.email || supabaseUser.email || '',
+      nickname: profile.nickname,
+      profileImage: profile.profile_image || undefined,
+      role: 'user',
+    };
+  }
+
+  // 프로필 없으면 생성 (upsert — 중복 키 오류 방지)
+  const nickname =
+    supabaseUser.user_metadata?.full_name ||
+    supabaseUser.user_metadata?.name ||
+    supabaseUser.email?.split('@')[0] ||
+    `사용자${Math.floor(Math.random() * 10000)}`;
+  const profileImage =
+    supabaseUser.user_metadata?.avatar_url ||
+    supabaseUser.user_metadata?.picture ||
+    undefined;
+
+  await supabase.from('profiles').upsert({
+    id: supabaseUser.id,
+    email: supabaseUser.email || '',
+    nickname,
+    profile_image: profileImage || null,
+  });
+
+  return {
+    id: supabaseUser.id,
+    email: supabaseUser.email || '',
+    nickname,
+    profileImage,
+    role: 'user',
+  };
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isAuthenticated: false,
       isLoading: true,
 
-      // 앱 시작 시 세션 확인
       initialize: async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (session?.user) {
-            // profiles 테이블에서 사용자 정보 가져오기
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle();
-
-            if (profile) {
+        // onAuthStateChange가 모든 세션 상태를 처리
+        supabase.auth.onAuthStateChange(async (event, session) => {
+          if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+            try {
+              const user = await resolveUserFromSession(session);
+              set({ user, isAuthenticated: true, isLoading: false });
+            } catch (error) {
+              console.error('Profile resolve error:', error);
+              // 프로필 오류여도 세션 기반으로 최소한 로그인 처리
               set({
                 user: {
-                  id: profile.id,
-                  email: profile.email || session.user.email || '',
-                  nickname: profile.nickname,
-                  profileImage: profile.profile_image || undefined,
-                  role: 'user',
-                },
-                isAuthenticated: true,
-                isLoading: false,
-              });
-            } else {
-              // 세션은 있지만 프로필 없는 경우 (OAuth 첫 로그인 등) 자동 생성
-              const supabaseUser = session.user;
-              const nickname =
-                supabaseUser.user_metadata?.full_name ||
-                supabaseUser.user_metadata?.name ||
-                supabaseUser.email?.split('@')[0] ||
-                `사용자${Math.floor(Math.random() * 10000)}`;
-              const profileImage =
-                supabaseUser.user_metadata?.avatar_url ||
-                supabaseUser.user_metadata?.picture ||
-                undefined;
-
-              await supabase.from('profiles').insert({
-                id: supabaseUser.id,
-                email: supabaseUser.email || '',
-                nickname,
-                profile_image: profileImage || null,
-              });
-
-              set({
-                user: {
-                  id: supabaseUser.id,
-                  email: supabaseUser.email || '',
-                  nickname,
-                  profileImage,
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  nickname: session.user.user_metadata?.name || session.user.email?.split('@')[0] || '사용자',
+                  profileImage: session.user.user_metadata?.avatar_url || undefined,
                   role: 'user',
                 },
                 isAuthenticated: true,
                 isLoading: false,
               });
             }
-          } else {
-            set({ isAuthenticated: false, isLoading: false });
+          } else if (event === 'SIGNED_OUT') {
+            set({ user: null, isAuthenticated: false, isLoading: false });
+          } else if (!session) {
+            set({ isLoading: false });
           }
-
-          // 인증 상태 변화 감지
-          supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .maybeSingle();
-
-              if (profile) {
-                set({
-                  user: {
-                    id: profile.id,
-                    email: profile.email || session.user.email || '',
-                    nickname: profile.nickname,
-                    profileImage: profile.profile_image || undefined,
-                    role: 'user',
-                  },
-                  isAuthenticated: true,
-                });
-              } else {
-                // OAuth 첫 로그인 시 프로필 자동 생성
-                const supabaseUser = session.user;
-                const nickname =
-                  supabaseUser.user_metadata?.full_name ||
-                  supabaseUser.user_metadata?.name ||
-                  supabaseUser.email?.split('@')[0] ||
-                  `사용자${Math.floor(Math.random() * 10000)}`;
-                const profileImage =
-                  supabaseUser.user_metadata?.avatar_url ||
-                  supabaseUser.user_metadata?.picture ||
-                  undefined;
-
-                await supabase.from('profiles').insert({
-                  id: supabaseUser.id,
-                  email: supabaseUser.email || '',
-                  nickname,
-                  profile_image: profileImage || null,
-                });
-
-                set({
-                  user: {
-                    id: supabaseUser.id,
-                    email: supabaseUser.email || '',
-                    nickname,
-                    profileImage,
-                    role: 'user',
-                  },
-                  isAuthenticated: true,
-                });
-              }
-            } else if (event === 'SIGNED_OUT') {
-              set({ user: null, isAuthenticated: false });
-            }
-          });
-        } catch (error) {
-          console.error('Auth initialization error:', error);
-          set({ isAuthenticated: false, isLoading: false });
-        }
-      },
-
-      // 이메일 로그인
-      login: async (email: string, password: string) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
         });
+      },
 
+      login: async (email: string, password: string) => {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-
-        if (data.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .maybeSingle();
-
-          if (profile) {
-            set({
-              user: {
-                id: profile.id,
-                email: profile.email || data.user.email || '',
-                nickname: profile.nickname,
-                profileImage: profile.profile_image || undefined,
-                role: 'user',
-              },
-              isAuthenticated: true,
-            });
-          }
+        if (data.session) {
+          const user = await resolveUserFromSession(data.session);
+          set({ user, isAuthenticated: true });
         }
       },
 
-      // 소셜 로그인
       loginWithOAuth: async (provider: 'google' | 'kakao') => {
         const { error } = await supabase.auth.signInWithOAuth({
           provider,
-          options: {
-            redirectTo: window.location.origin,
-          },
+          options: { redirectTo: window.location.origin },
         });
-
         if (error) throw error;
       },
 
-      // 회원가입
       signup: async (email: string, password: string, nickname?: string) => {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
 
         if (data.user) {
-          // profiles 테이블에 사용자 정보 저장
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              email: data.user.email || email,
-              nickname: nickname || `사용자${Math.floor(Math.random() * 10000)}`,
-            });
-
+          const generatedNickname = nickname || `사용자${Math.floor(Math.random() * 10000)}`;
+          const { error: profileError } = await supabase.from('profiles').insert({
+            id: data.user.id,
+            email: data.user.email || email,
+            nickname: generatedNickname,
+          });
           if (profileError) throw profileError;
 
           set({
             user: {
               id: data.user.id,
               email: data.user.email || email,
-              nickname: nickname || `사용자${Math.floor(Math.random() * 10000)}`,
+              nickname: generatedNickname,
               role: 'user',
             },
             isAuthenticated: true,
@@ -230,13 +151,11 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // 로그아웃
       logout: async () => {
         await supabase.auth.signOut();
         set({ user: null, isAuthenticated: false });
       },
 
-      // 사용자 정보 업데이트
       updateUser: (userData: Partial<User>) => {
         set((state) => ({
           user: state.user ? { ...state.user, ...userData } : null,
