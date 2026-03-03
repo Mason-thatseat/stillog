@@ -52,7 +52,10 @@ export default function SpaceRegisterForm({ onSuccess }: SpaceRegisterFormProps)
     try {
       const url = `${KAKAO_SEARCH_URL}?query=${encodeURIComponent(keyword)}&category_group_code=FD6,CE7,BK9&size=10`;
       const res = await fetch(url, {
-        headers: { apikey: SUPABASE_ANON_KEY },
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
       });
       if (!res.ok) throw new Error('API 오류');
       const data = await res.json();
