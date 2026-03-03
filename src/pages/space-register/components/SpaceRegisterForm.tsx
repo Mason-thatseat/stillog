@@ -50,7 +50,7 @@ export default function SpaceRegisterForm({ onSuccess }: SpaceRegisterFormProps)
     setKakaoLoading(true);
     setKakaoError('');
     try {
-      const url = `${KAKAO_SEARCH_URL}?query=${encodeURIComponent(keyword)}&category_group_code=FD6,CE7,BK9&size=10`;
+      const url = `${KAKAO_SEARCH_URL}?query=${encodeURIComponent(keyword)}&size=10`;
       const res = await fetch(url, {
         headers: {
           apikey: SUPABASE_ANON_KEY,

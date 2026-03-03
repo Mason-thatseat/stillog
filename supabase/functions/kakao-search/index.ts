@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const KAKAO_API_KEY = "12c76eda3ab8499974a1a67c26033491";
+const KAKAO_API_KEY = "af09f92ac5ffff08f5682d370f37e19d";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,7 +17,6 @@ serve(async (req) => {
     const url = new URL(req.url);
     const query = url.searchParams.get("query");
     const size = url.searchParams.get("size") || "15";
-    const categoryGroupCode = url.searchParams.get("category_group_code") || "FD6,CE7,BK9";
 
     if (!query) {
       return new Response(
@@ -26,7 +25,7 @@ serve(async (req) => {
       );
     }
 
-    const kakaoUrl = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&category_group_code=${categoryGroupCode}&size=${size}`;
+    const kakaoUrl = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=${size}`;
 
     const res = await fetch(kakaoUrl, {
       headers: { Authorization: `KakaoAK ${KAKAO_API_KEY}` },
