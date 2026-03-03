@@ -18,8 +18,8 @@ interface SpaceRegisterFormProps {
   onSuccess?: (spaceId: string, spaceName: string, spaceAddress: string, spaceType: string) => void;
 }
 
-const KAKAO_API_KEY = '12c76eda3ab8499974a1a67c26033491';
 const KAKAO_SEARCH_URL = 'https://htabnxfeqdkwgsxfzwlb.supabase.co/functions/v1/kakao-search';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY as string;
 
 export default function SpaceRegisterForm({ onSuccess }: SpaceRegisterFormProps) {
   const [formData, setFormData] = useState({
@@ -51,7 +51,9 @@ export default function SpaceRegisterForm({ onSuccess }: SpaceRegisterFormProps)
     setKakaoError('');
     try {
       const url = `${KAKAO_SEARCH_URL}?query=${encodeURIComponent(keyword)}&category_group_code=FD6,CE7,BK9&size=10`;
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: { apikey: SUPABASE_ANON_KEY },
+      });
       if (!res.ok) throw new Error('API 오류');
       const data = await res.json();
       setKakaoResults(data.documents ?? []);
